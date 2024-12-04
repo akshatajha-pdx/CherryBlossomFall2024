@@ -61,3 +61,15 @@ graph2.1 <- graph2 %>%
   ungroup()
 
 favstats(n ~ Gender, data=graph2.1)
+
+graph2 %>% ggplot(aes(x=Year, groups=Gender)) +
+  geom_histogram() +
+  facet_wrap(~Gender)
+
+graph2 %>% ggplot(aes(x=Year, fill=Gender)) +
+  geom_density(alpha=0.5) +
+  scale_fill_manual(values = c("M" = "turquoise", "W" = "salmon"))
+
+
+
+
