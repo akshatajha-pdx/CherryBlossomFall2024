@@ -5,6 +5,11 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+install.packages("pander")
+install.packages("lubridate")
+install.packages("mosaic")
+install.packages("ggplot2")
+
 library(readr)
 library(dplyr)
 library(tidyverse)
@@ -78,6 +83,7 @@ graph2 <- Dat_Comb %>%
 
 pander(favstats(n ~ Gender, data=graph2))
 ```
+
 
 
 

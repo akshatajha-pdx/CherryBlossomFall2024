@@ -1,0 +1,44 @@
+---
+title: "Graphics-Asha"
+output: html_document
+date: "2024-12-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("pander")
+install.packages("lubridate")
+install.packages("mosaic")
+install.packages("ggplot2")
+
+library(readr)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(mosaic)
+library(ggplot2)
+library(pander)
+Data_73_21 <- read_csv("Data_73_21.csv")
+Data_22 <- read_csv("Data_22.csv")
+Data_23 <- read_csv("Data_23.csv")
+Data_24 <- read_csv("Data_24.csv")
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
