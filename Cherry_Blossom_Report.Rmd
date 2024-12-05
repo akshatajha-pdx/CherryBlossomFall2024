@@ -79,7 +79,37 @@ graph2 <- Dat_Comb %>%
 pander(favstats(n ~ Gender, data=graph2))
 ```
 
+```{r}
+graph3 <- Dat_Comb %>% 
+  filter(!is.na(Age)) %>% 
+  mutate(Age_Group = case_when(
+      Age < 20 ~ "Under 20",
+      Age >= 20 & Age < 30 ~ "20s",
+      Age >= 30 & Age < 40 ~ "30s",
+      Age >= 40 & Age < 50 ~ "40s",
+      Age >= 50 & Age < 60 ~ "50s",
+      Age >= 60 & Age < 70 ~ "60s",
+      Age >= 70 ~ "70+"))
+
+graph3 %>% ggplot(aes(x=Year, fill=Age_Group)) +
+  geom_bar(position = "stack") +
+  labs(y="Number of Participants", 
+       title="Number of Runners Participating in Each Age Group Per Year", 
+       caption = "Note: 2020 was virtual only and 2021 was pushed to September, both due to Covid-19", fill="Age Group") +
+  theme_bw() +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 0))
+```
 
 
+## Gender Insights
+
+```{r}
+graph4 <- Dat_Comb %>% 
+  filter(!is.na(Pace)) %>% 
+  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) #%>%
+ # summarise(avg_pace = mean(Pace_Num), .by=c(Gender, Year)) %>% 
+  #ungroup()
+```
 
 
