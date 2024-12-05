@@ -1,0 +1,85 @@
+---
+title: "Cherry Blossom Race Data"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(mosaic)
+library(ggplot2)
+library(pander)
+Data_73_21 <- read_csv("Data_73_21.csv")
+Data_22 <- read_csv("Data_22.csv")
+Data_23 <- read_csv("Data_23.csv")
+Data_24 <- read_csv("Data_24.csv")
+```
+
+## Cherry Blossom Race Data 1973-2024
+
+```{r}
+Data_73_21 <- Data_73_21 %>% 
+  separate(Name, c("Name", "Gender"), sep = -4) %>% 
+  mutate(Gender = case_when(Gender == " (M)" ~ "M",
+                            Gender == " (W)" ~ "W")) %>% 
+  rename(PiS_TiS = `PiS/TiS`, PiD_TiD = `PiD/TiD`) %>% 
+  select(1,2,9,7,4,5,6,8,10,11,3) %>% 
+  select(-1)
+
+Data_22 <- Data_22 %>% select(-1)
+Data_23 <- Data_23 %>% select(-1)
+Data_24 <- Data_24 %>% select(-1)
+
+Dat_Comb <- rbind(Data_73_21, Data_22, Data_23, Data_24)
+```
+
+
+## Summary Statistics
+
+```{r}
+graph1 <- Dat_Comb %>%
+  group_by(Year) %>%
+  add_count() %>%
+  ungroup()
+  
+graph1 %>%  ggplot(aes(x=Year, y=n)) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(trans="identity", limits=c(1973,2024), breaks=seq(1973,2024,3)) +
+  scale_y_continuous(trans="identity", limits=c(100,18000), 
+                     breaks=c(100, 2500,5000,7500,10000,12500,15000,17500)) +
+  labs(y="Number of Participants", title="Number of Runners Participating Per Year", 
+       caption="Note: 2020 was virtual only and 2021 was pushed to September, both due to Covid-19") +
+  theme_bw() +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 0), 
+       axis.text.x=element_text(angle = 45, hjust = 1))
+
+pander(fav_stats(graph1$n))
+```
+
+```{r}
+Dat_Comb %>% ggplot(aes(x=Year, fill=Gender)) +
+  geom_bar(position="fill") +
+ # scale_x_continuous(trans="identity", limits=c(1973,2024), breaks=seq(1973,2024,8)) +
+  scale_fill_manual(values = c("M" = "turquoise", "W" = "salmon")) +
+  labs(y="Proportion", title = "Proportion of Men and Women Participating Each Year") +
+  geom_abline(aes(intercept=0.5, slope=0), color="black") +
+  theme_bw()
+  #theme(axis.text.x=element_text(angle = 45, hjust = 1))
+
+graph2 <- Dat_Comb %>%
+  group_by(Year, Gender) %>% 
+  add_count() %>%
+  ungroup()
+
+pander(favstats(n ~ Gender, data=graph2))
+```
+
+
+
+
+
