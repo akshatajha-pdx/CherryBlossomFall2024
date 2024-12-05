@@ -4,7 +4,6 @@ library(readr)
 library(lubridate)
 library(mosaic)
 library(ggplot2)
-library(mosaic)
 
 Data_73_21 <- read_csv("Data_73_21.csv")
 
@@ -16,9 +15,6 @@ Dat_Cleaned <- Data_73_21 %>%
   mutate(Minutes = (period_to_seconds(hms(Time)))/60) %>% # Adding a column for time in minutes
   mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60)
 
-
-ggplot(Dat_Cleaned, aes(x=Year, y=n(Year), group=Year)) +
-  geom_line()
 
 graph1 <- Data_73_21 %>%
   group_by(Year) %>%
