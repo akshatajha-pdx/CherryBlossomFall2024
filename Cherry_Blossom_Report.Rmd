@@ -12,10 +12,10 @@ library(lubridate)
 library(mosaic)
 library(ggplot2)
 library(pander)
-Data_73_21 <- read_csv("Data_73_21.csv")
-Data_22 <- read_csv("Data_22.csv")
-Data_23 <- read_csv("Data_23.csv")
-Data_24 <- read_csv("Data_24.csv")
+Data_73_21 <- read_csv("Data_73_21.csv", na=c("NR", "NA"), col_types = "ccnccccccn")
+Data_22 <- read_csv("Data_22.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
+Data_23 <- read_csv("Data_23.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
+Data_24 <- read_csv("Data_24.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
 ```
 
 ## Cherry Blossom Race Data 1973-2024
@@ -107,9 +107,13 @@ graph3 %>% ggplot(aes(x=Year, fill=Age_Group)) +
 ```{r}
 graph4 <- Dat_Comb %>% 
   filter(!is.na(Pace)) %>% 
-  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) #%>%
- # summarise(avg_pace = mean(Pace_Num), .by=c(Gender, Year)) %>% 
-  #ungroup()
+  filter(!is.na(Gender)) %>% 
+  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% 
+  summarise(avg_pace = mean(Pace_Num), .by=c(Gender, Year)) %>% 
+  ungroup()
+
+graph4 %>% ggplot(aes(y=avg_pace, x=Year, color=Gender)) +
+  geom_line()
 ```
 
 

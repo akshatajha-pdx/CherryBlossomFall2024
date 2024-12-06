@@ -12,8 +12,9 @@ Dat_Cleaned <- Data_73_21 %>%
   mutate(Time = na_if(Time, "NR")) %>% # Replacing "NR" with NA
   mutate(Time = na_if(Time, "")) %>%
   filter(!is.na(Time)) %>%  # Removing observations with missing age or time data
-  mutate(Minutes = (period_to_seconds(hms(Time)))/60) %>% # Adding a column for time in minutes
-  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60)
+  mutate(Time = hms(Time))
+  mutate(Minutes = (period_to_seconds(hms(Time)))/60) #%>% # Adding a column for time in minutes
+ # mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60)
 
 
 graph1 <- Data_73_21 %>%
