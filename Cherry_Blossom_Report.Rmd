@@ -17,10 +17,10 @@ library(lubridate)
 library(mosaic)
 library(ggplot2)
 library(pander)
-Data_73_21 <- read_csv("Data_73_21.csv")
-Data_22 <- read_csv("Data_22.csv")
-Data_23 <- read_csv("Data_23.csv")
-Data_24 <- read_csv("Data_24.csv")
+Data_73_21 <- read_csv("Data_73_21.csv", na=c("NR", "NA"), col_types = "ccnccccccn")
+Data_22 <- read_csv("Data_22.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
+Data_23 <- read_csv("Data_23.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
+Data_24 <- read_csv("Data_24.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
 ```
 
 ## Cherry Blossom Race Data 1973-2024
@@ -41,6 +41,35 @@ Data_24 <- Data_24 %>% select(-1)
 Dat_Comb <- rbind(Data_73_21, Data_22, Data_23, Data_24)
 ```
 
+
+## Data Cleaning
+Included just rows with existing age
+```{r}
+Dat_Comb 
+Dat_Comb.with_age <- Dat_Comb %>% filter(!is.na(Age))
+
+```
+
+This adds the precipitation and minimum temperature for that date
+```{r}
+library(readr)
+weather <- read_csv("C:/Users/andri/Downloads/weatherdat.csv",show_col_types = FALSE)
+
+dates <- data.frame(
+  year = 1973:1982,
+  date = as.Date(c("1973-04-01", "1974-03-31", "1975-04-06", "1976-04-04", 
+           "1977-04-03", "1978-04-02", "1979-04-01", "1980-03-30", 
+           "1981-04-05", "1982-04-04"))
+)
+
+temp<-left_join(Dat_Comb.with_age, dates, by = c("Year" = "year"))
+sample_n(temp, 10)
+
+
+Dat_Comb.weather_and_age <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date" = "DATE"))
+sample_n(Dat_Comb.all, 10)
+Dat_Comb.weather_and_age
+```
 
 ## Summary Statistics
 
@@ -106,15 +135,25 @@ graph3 %>% ggplot(aes(x=Year, fill=Age_Group)) +
         plot.caption = element_text(hjust = 0))
 ```
 
+```{r}
+Dat_Comb 
+Dat_Comb[,Age] %>% is.na() %>% sum()
+```
+
+
 
 ## Gender Insights
 
 ```{r}
 graph4 <- Dat_Comb %>% 
   filter(!is.na(Pace)) %>% 
-  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) #%>%
- # summarise(avg_pace = mean(Pace_Num), .by=c(Gender, Year)) %>% 
-  #ungroup()
+  filter(!is.na(Gender)) %>% 
+  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% 
+  summarise(avg_pace = mean(Pace_Num), .by=c(Gender, Year)) %>% 
+  ungroup()
+
+graph4 %>% ggplot(aes(y=avg_pace, x=Year, color=Gender)) +
+  geom_line()
 ```
 
 
