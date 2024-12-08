@@ -171,11 +171,6 @@ graph4 %>% ggplot(aes(y=avg_pace, x=Year, color=Gender)) +
 
 # Was Runners Performance Affected by Weather?
 ```{r}
-library(ggplot2)
-library(scales)
-
-# Assuming the summarized data is stored in avg_prcp_per_year
-
 # Plotting
 ggplot(avg_prcp_per_year, aes(x = Year)) +
   # Line for Avg_Pace
@@ -202,9 +197,6 @@ ggplot(avg_prcp_per_year, aes(x = Year)) +
   theme(legend.position = "bottom")
 
 
-```
-```{r}
-str(Dat_Comb.weather_and_age)
 ```
 
 
