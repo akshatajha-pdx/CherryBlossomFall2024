@@ -46,23 +46,23 @@ Dat_Comb <- rbind(Data_73_21, Data_22, Data_23, Data_24)
 ## Data Cleaning
 Included just rows with existing age
 ```{r}
-
-Dat_Comb_with_age <- Dat_Comb %>%
+Dat_Comb <- Dat_Comb %>%
   filter(!is.na(Age))
 
 # Process Time and add new columns
-Dat_Comb_with_age <- Dat_Comb_with_age %>%
+Dat_Comb <- Dat_Comb %>%
   mutate(
-    Time = na_if(Time, "NR"),          # Replace "NR" with NA
-    Time = na_if(Time, ""),           # Replace empty strings with NA
-    Time = if_else(
-      str_detect(Time, "^\\d{1,2}:\\d{1,2}:\\d{1,2}$"), # Check valid hms format
-      Time, NA_character_             # Replace invalid formats with NA
+    Time = na_if(Time, "NR"),          
+    Time = na_if(Time, ""),            
+    Time = case_when(
+      str_detect(Time, "^\\d{1,2}:\\d{1,2}$") ~ paste0("00:", Time), # Add "00:" for missing hours
+      str_detect(Time, "^\\d{1,2}:\\d{1,2}:\\d{1,2}$") ~ Time,       
+      TRUE ~ NA_character_             # Replace invalid formats with NA
     ),
-    Time = hms(Time),                 # Convert valid Time to hms format
+    Time = hms(Time),                  # Convert valid Time to hms format
     Minutes = period_to_seconds(Time) / 60 # Calculate time in minutes
   ) %>%
-  filter(!is.na(Time))                # Remove rows with missing Time
+  filter(!is.na(Time))                 # Remove rows with missing Time
 
 
 ```
@@ -70,8 +70,7 @@ Dat_Comb_with_age <- Dat_Comb_with_age %>%
 ## Adding weatherinfos
 ```{r}
 
-weather <- read_csv("weatherdat.csv",show_col_types = FALSE)
-
+weather <- read_csv("3865927.csv",show_col_types = FALSE)
 dates <- data.frame(
   year = 1973:2024,
   date = as.Date(c("1973-04-01", "1974-03-31", "1975-04-06", "1976-04-04", 
@@ -88,9 +87,8 @@ dates <- data.frame(
                    "2017-04-02", "2018-04-07", "2019-04-06", "2020-04-05", 
                    "2021-09-12", "2022-04-03", "2023-04-02", "2024-04-6")))
 
-temp<-left_join(Dat_Comb.with_age, dates, by = c("Year" = "year"))
+temp<-left_join(Dat_Comb, dates, by = c("Year" = "year"))
 Dat_Comb.full <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date" = "DATE"))
-Dat_Comb.full
 ```
 
 ## Summary Statistics
@@ -175,31 +173,49 @@ graph4 %>% ggplot(aes(y=avg_pace, x=Year, color=Gender)) +
 
 # Was Runners Performance Affected by Weather?
 ```{r}
-# Plotting
-ggplot(avg_prcp_per_year, aes(x = Year)) +
+
+avg_per_year <- Dat_Comb.full %>%
+  group_by(Year) %>%
+  summarise(
+    Avg_PRCP = mean(PRCP, na.rm = TRUE),
+    winner=min(Minutes, na.rm = TRUE),
+    Temperature = mean(TMIN, na.rm = TRUE),
+    Minutes = mean(Minutes, na.rm = TRUE)
+  )
+
+# Adjusted Plot
+ggplot(avg_per_year, aes(x = Year)) +
   # Line for Avg_Pace
-  geom_line(aes(y = Avg_Pace, color = "Average Pace (min)"), size = 1) +
+  geom_line(aes(y = Minutes, color = "Average Pace (min)"), size = .3) +
   # Line for Avg_PRCP
-  geom_line(aes(y = Avg_PRCP * 10, color = "Precipitation (scaled)"), size = 1, linetype = "dashed") +
-  # Line for Avg_TMIN
-  geom_line(aes(y = Avg_TMIN, color = "Temperature (°F)"), size = 1, linetype = "dotted") +
+  geom_line(aes(y = Avg_PRCP * 10, color = "Precipitation (scaled)"), size = 0.3) +
+  # Line for Temperature
+  geom_line(aes(y = Temperature, color = "Temperature (°F)"), size = 0.3) +
+  # Primary and secondary y-axis
+  geom_line(aes(y=winner, color="Winner"), size=0.3) +
   scale_y_continuous(
     name = "Pace & Temperature",
     sec.axis = sec_axis(~ . / 10, name = "Precipitation")
   ) +
+  # Custom color legend
   scale_color_manual(
     name = "Legend",
     values = c(
       "Average Pace (min)" = "blue",
       "Precipitation (scaled)" = "green",
-      "Temperature (°F)" = "red"
+      "Temperature (°F)" = "red",
+      "Winner Time" = "black"
     )
   ) +
-  labs(title = "Runners' Performance and Weather Conditions by Year",
-       x = "Year") +
-  theme_bw() +
-  theme(legend.position = "bottom")
+  labs(
+    title = "Average Time, Precipitation, and Temperature by Year",
+    x = "Year"
+  ) +
+  theme_bw()
 
+
+avg_per_year
+head(Dat_Comb.full)
 
 ```
 
