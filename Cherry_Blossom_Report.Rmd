@@ -158,3 +158,83 @@ graph4 %>% ggplot(aes(y=avg_pace, x=Year, color=Gender)) +
 
 
 
+```{r}
+
+# Step 1: Filter top 20 runners per year
+top_runners <- Dat_Comb.full %>%
+  group_by(Year) %>%
+  arrange(Minutes) %>%
+  slice_head(n = 50) %>%
+  ungroup()
+
+# Step 2: Calculate average running time, temperature, and precipitation
+avg_running_time <- top_runners %>%
+  group_by(Year) %>%
+  summarize(
+    AvgTime = mean(Minutes, na.rm = TRUE),
+    AvgTemp = mean(TMIN, na.rm = TRUE),
+    AvgPrecip = mean(PRCP, na.rm = TRUE)
+  )
+
+# Step 3: Detrend running time to account for overall improvement over the years
+lm_trend <- lm(AvgTime ~ Year, data = avg_running_time)
+avg_running_time <- avg_running_time %>%
+  mutate(DetrendedTime = resid(lm_trend))
+summary(lm_trend)
+
+# Step 4: Perform correlation analysis
+cor_matrix <- avg_running_time %>%
+  select(DetrendedTime, AvgTemp, AvgPrecip) %>%
+  cor(use = "complete.obs")
+
+print("Correlation Matrix:")
+print(cor_matrix)
+
+# Step 5: Visualization of relationships
+# Temperature vs Detrended Running Time
+ggplot(avg_running_time, aes(x = AvgTemp, y = DetrendedTime)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Temperature vs Running Time (Detrended)",
+       x = "Average Temperature",
+       y = "Detrended Running Time")
+
+# Precipitation vs Detrended Running Time
+ggplot(avg_running_time, aes(x = AvgPrecip, y = DetrendedTime)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Precipitation vs Running Time (Detrended)",
+       x = "Average Precipitation",
+       y = "Detrended Running Time")
+
+# Step 6: Linear regression analysis
+lm_weather <- lm(DetrendedTime ~ AvgTemp + AvgPrecip, data = avg_running_time)
+summary(lm_weather)
+
+```
+```{r}
+# Filter data for specific age groups and genders
+filtered_data <- Dat_Comb.full %>%
+  filter(Age %in% c(25, 45), Gender %in% c("M", "W")) %>%
+  mutate(
+    Age_Group = paste(Gender, Age, sep = " ")
+  )
+
+# Summarize performance (e.g., average time in minutes) by year and age group
+performance_by_age <- filtered_data %>%
+  group_by(Year, Age_Group) %>%
+  summarise(Average_Time = mean(Minutes, na.rm = TRUE), .groups = "drop")
+
+# Plot performance over age with smoothed lines
+ggplot(performance_by_age, aes(x = Year, y = Average_Time, color = Age_Group)) +
+  geom_smooth(se = FALSE, method = "loess", span=0.25,size = 1) +  # Add smoothed lines
+  labs(
+    title = "Performance Over The Years By Age",
+    x = "Year",
+    y = "Average Time (Minutes)",
+    color = "Age"
+  ) +
+  theme_bw()
+
+```
+
