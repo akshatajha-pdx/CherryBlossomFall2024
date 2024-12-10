@@ -133,6 +133,8 @@ graph3 %>% ggplot(aes(x=Year, fill=Age_Group)) +
   theme_bw() +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0))
+
+pander(favstats(Dat_Comb1$Age))
 ```
 
 ```{r}
@@ -153,7 +155,121 @@ graph4 <- Dat_Comb %>%
   ungroup()
 
 graph4 %>% ggplot(aes(y=avg_pace, x=Year, color=Gender)) +
-  geom_line()
+  geom_line() +
+  scale_color_manual(values = c("M" = "turquoise", "W" = "salmon")) +
+  scale_x_continuous(trans="identity", limits=c(1973,2024), breaks=seq(1973,2024,3)) +
+  labs(y="Average Pace (in Minutes)", title = "Average Pace Each Year by Gender") +
+  theme_bw()
+pander(favstats(avg_pace ~ Gender, data=graph4))
+```
+
+
+```{r}
+Dat_Comb %>% 
+  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% 
+  filter(!is.na(Gender)) %>%
+  ggplot(aes(x=Pace_Num, group=Gender, fill=Gender)) +
+  geom_density(alpha=0.5) +
+  scale_fill_manual(values = c("M" = "turquoise", "W" = "salmon")) +
+  theme_bw() +
+  labs(x="Pace in Minutes", title="Distribution of Pace by Gender", y="Density")
+```
+
+
+```{r}
+Dat_Comb %>% 
+  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% 
+  filter(!is.na(Gender)) %>%
+   mutate(Age_Group = case_when(
+      Age < 20 ~ "< 20",
+      Age >= 20 & Age < 30 ~ "20s",
+      Age >= 30 & Age < 40 ~ "30s",
+      Age >= 40 & Age < 50 ~ "40s",
+      Age >= 50 & Age < 60 ~ "50s",
+      Age >= 60 & Age < 70 ~ "60s",
+      Age >= 70 ~ "70+")) %>% 
+  summarise(avg_pace = mean(Pace_Num), .by=c(Gender, Age_Group)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x=Age_Group, y=Gender, fill=avg_pace)) +
+  geom_tile() +
+  labs(x="Age Group", legend="Average Pace", title="Average Pace by Gender and Age Group") +
+  theme_bw() +
+  scale_fill_viridis_c()
+```
+
+
+
+## Was Runners Performance Affected by Weather?
+```{r}
+
+avg_per_year <- Dat_Comb.full %>%
+  group_by(Year) %>%
+  summarise(
+    Avg_PRCP = mean(PRCP, na.rm = TRUE),
+    winner=min(Minutes, na.rm = TRUE),
+    Temperature = mean(TMIN, na.rm = TRUE),
+    Minutes = mean(Minutes, na.rm = TRUE)
+  )
+
+# Adjusted Plot
+ggplot(avg_per_year, aes(x = Year)) +
+  # Line for Avg_Pace
+  geom_line(aes(y = Minutes, color = "Average Pace (min)"), size = .3) +
+  # Line for Avg_PRCP
+  geom_line(aes(y = Avg_PRCP * 10, color = "Precipitation (scaled)"), size = 0.3) +
+  # Line for Temperature
+  geom_line(aes(y = Temperature, color = "Temperature (°F)"), size = 0.3) +
+  # Primary and secondary y-axis
+  geom_line(aes(y=winner, color="Winner"), size=0.3) +
+  scale_y_continuous(
+    name = "Pace & Temperature",
+    sec.axis = sec_axis(~ . / 10, name = "Precipitation")
+  ) +
+  # Custom color legend
+  scale_color_manual(
+    name = "Legend",
+    values = c(
+      "Average Pace (min)" = "blue",
+      "Precipitation (scaled)" = "green",
+      "Temperature (°F)" = "red",
+      "Winner Time" = "black"
+    )
+  ) +
+  labs(
+    title = "Average Time, Precipitation, and Temperature by Year",
+    x = "Year"
+  ) +
+  theme_bw()
+
+
+avg_per_year
+head(Dat_Comb.full)
+
+```
+
+
+
+## Regression
+
+```{r}
+mod1 <- lm(Minutes ~ Age, data=Dat_Comb)
+summary(mod1)
+
+mod2 <- lm(Minutes ~ Age + Gender, data=Dat_Comb)
+summary(mod2)
+
+mod3 <- lm(Minutes ~ Age*Gender, data=Dat_Comb)
+summary(mod3)
+plot(mod3)
+
+Dat_Comb %>% 
+  filter(!is.na(Gender)) %>%
+  ggplot(aes(x=Age, y=Minutes, color=Gender)) +
+  geom_point(alpha=0.1) +
+  geom_smooth(method=lm, linewidth=1.2) +
+  scale_color_manual(values = c("M" = "turquoise", "W" = "salmon")) +
+  labs(y="Run Time in Minutes", title="Predicting Runtime by Age and Gender") +
+  theme_bw()
 ```
 
 
