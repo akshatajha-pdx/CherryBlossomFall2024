@@ -206,7 +206,7 @@ Dat_Comb %>%
 
 
 
-# Was Runners Performance Affected by Weather?
+## Was Runners Performance Affected by Weather?
 ```{r}
 
 avg_per_year <- Dat_Comb.full %>%
@@ -253,5 +253,26 @@ avg_per_year
 head(Dat_Comb.full)
 
 ```
+
+
+
+## Regression
+
+```{r}
+mod1 <- lm(Minutes ~ Age, data=Dat_Comb)
+summary(mod1)
+
+mod2 <- lm(Minutes ~ Age + Gender, data=Dat_Comb)
+summary(mod2)
+
+mod3 <- lm(Minutes ~ Age*Gender, data=Dat_Comb)
+summary(mod3)
+plot(mod3)
+
+Dat_Comb %>% 
+  ggplot(aes(x=Age, y=Minutes, color=Gender)) +
+  geom_point()
+```
+
 
 
