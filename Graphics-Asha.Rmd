@@ -26,21 +26,22 @@ Data_24 <- read_csv("Data_24.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
 ```
 
 
-Line graph showing average race times across different age groups over time.
+Line graph showing average race times across different age groups over time. (Years 1973 to 2024)
 
 ```{r}
-# Load necessary libraries
 library(ggplot2)
 library(dplyr)
 library(lubridate)
 
-# Assuming `Data_73_21` is the dataset containing the race data
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
 # Convert Time to numeric (in minutes)
-Data_73_21 <- Data_73_21 %>%
+all_data <- all_data %>%
   mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
 
-# Create age groups (optional, if not already grouped)
-Data_73_21 <- Data_73_21 %>%
+# Create age groups (if not already grouped)
+all_data <- all_data %>%
   mutate(Age_Group = case_when(
     Age < 20 ~ "<20",
     Age >= 20 & Age < 30 ~ "20-29",
@@ -49,17 +50,21 @@ Data_73_21 <- Data_73_21 %>%
     Age >= 50 ~ "50+"
   ))
 
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(!is.na(Time_in_Minutes) & !is.na(Age_Group) & !is.na(Year))
+
 # Calculate average race time for each age group over years
-average_race_times <- Data_73_21 %>%
+average_race_times <- all_data %>%
   group_by(Year, Age_Group) %>%
-  summarize(Average_Time = mean(Time_in_Minutes, na.rm = TRUE)) %>%
-  ungroup()
+  summarize(Average_Time = mean(Time_in_Minutes, na.rm = TRUE), .groups = "drop")
 
 # Create the line graph
 ggplot(data = average_race_times, aes(x = Year, y = Average_Time, color = Age_Group)) +
   geom_line(size = 1) +
+  scale_x_continuous(breaks = seq(1973, 2024, 5), limits = c(1973, 2024)) +  # Set x-axis from 1973 to 2024
   labs(
-    title = "Average Race Times Across Age Groups Over Time",
+    title = "Average Race Times Across Age Groups (1973–2024)",
     x = "Year",
     y = "Average Race Time (minutes)",
     color = "Age Group"
@@ -70,14 +75,607 @@ ggplot(data = average_race_times, aes(x = Year, y = Average_Time, color = Age_Gr
     legend.position = "bottom"
   )
 
-```
 
 
-```{r}
 ```
 
-```{r}
-```
+Faceted line plots for different genders to explore gender-specific trends. (Years 1973 to 2024)
 
 ```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Create age groups (if not already grouped)
+all_data <- all_data %>%
+  mutate(Age_Group = case_when(
+    Age < 20 ~ "<20",
+    Age >= 20 & Age < 30 ~ "20-29",
+    Age >= 30 & Age < 40 ~ "30-39",
+    Age >= 40 & Age < 50 ~ "40-49",
+    Age >= 50 ~ "50+"
+  ))
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Year) & 
+    !is.na(Division) & 
+    !is.na(Age_Group)
+  )
+
+# Calculate average race time for each age group, year, and division
+average_race_times <- all_data %>%
+  group_by(Year, Division, Age_Group) %>%
+  summarize(Average_Time = mean(Time_in_Minutes, na.rm = TRUE), .groups = "drop")
+
+# Create the faceted line graph
+ggplot(data = average_race_times, aes(x = Year, y = Average_Time, color = Age_Group)) +
+  geom_line(size = 1) +
+  scale_x_continuous(breaks = seq(1973, 2024, 5), limits = c(1973, 2024)) +  # Set x-axis from 1973 to 2024
+  labs(
+    title = "Average Race Times Across Age Groups by Division (1973–2024)",
+    x = "Year",
+    y = "Average Race Time (minutes)",
+    color = "Age Group"
+  ) +
+  facet_wrap(~Division) +  # Facet by Division (gender proxy)
+  theme_bw() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "bottom"
+  )
+
 ```
+
+Spaghetti plot of individual runners’ pace over multiple years. Highlight notable repeat runners. (Years 1973 to 2024)
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Year) & 
+    !is.na(Name)
+  )
+
+# Identify repeat runners (participated in multiple years)
+repeat_runners <- all_data %>%
+  group_by(Name) %>%
+  summarize(Years_Run = n_distinct(Year), .groups = "drop") %>%
+  filter(Years_Run > 2) %>%  # Define "notable" as participating in more than 2 years
+  pull(Name)
+
+# Filter data for repeat runners
+all_data <- all_data %>%
+  mutate(Is_Notable = ifelse(Name %in% repeat_runners, "Notable Repeat Runner", "Other Runner"))
+
+# Create the spaghetti plot
+ggplot(all_data, aes(x = Year, y = Time_in_Minutes, group = Name)) +
+  geom_line(aes(color = Is_Notable), alpha = 0.6, size = 0.8) +
+  scale_color_manual(
+    values = c("Notable Repeat Runner" = "red", "Other Runner" = "lightblue"),
+    name = "Runner Type"
+  ) +
+  labs(
+    title = "Spaghetti Plot of Individual Runners' Pace Over Multiple Years",
+    x = "Year",
+    y = "Pace (minutes per mile)"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "bottom"
+  )
+```
+
+Scatter plot showing change in performance over time for runners who participated multiple times. (Years 1973 to 2024)
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Year) & 
+    !is.na(Name)
+  )
+
+# Identify runners who participated multiple times
+repeat_runners <- all_data %>%
+  group_by(Name) %>%
+  summarize(Years_Run = n_distinct(Year), .groups = "drop") %>%
+  filter(Years_Run > 1) %>%  # Only include runners with more than 1 participation year
+  pull(Name)
+
+# Filter data for repeat runners
+repeat_runners_data <- all_data %>%
+  filter(Name %in% repeat_runners)
+
+# Calculate year-over-year change in performance
+repeat_runners_data <- repeat_runners_data %>%
+  arrange(Name, Year) %>%  # Ensure data is ordered by runner and year
+  group_by(Name) %>%
+  mutate(Change_in_Performance = Time_in_Minutes - lag(Time_in_Minutes)) %>%
+  ungroup()
+
+# Create the scatter plot
+ggplot(repeat_runners_data, aes(x = Year, y = Change_in_Performance, color = Name)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(
+    title = "Change in Performance Over Time for Runners Who Participated Multiple Times",
+    x = "Year",
+    y = "Change in Performance (minutes)",
+    color = "Runner"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "none"  # Hide legend for readability with many runners
+  )
+```
+
+Scatter plot of age vs. average pace for all runners. (Years 1973 to 2024)
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Age) & 
+    !is.na(Year)
+  )
+
+# Calculate average pace for each runner
+average_pace_data <- all_data %>%
+  group_by(Name, Age) %>%
+  summarize(Average_Pace = mean(Time_in_Minutes, na.rm = TRUE), .groups = "drop")
+
+# Create the scatter plot
+ggplot(average_pace_data, aes(x = Age, y = Average_Pace)) +
+  geom_point(alpha = 0.6, color = "lightblue", size = 2) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +  # Optional linear trend line
+  labs(
+    title = "Scatter Plot of Age vs. Average Pace for All Runners (1973–2024)",
+    x = "Age (years)",
+    y = "Average Pace (minutes per mile)"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12)
+  )
+```
+
+Box plot comparing pace distributions across age groups. (Years 1973 to 2024)
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Create age groups
+all_data <- all_data %>%
+  mutate(Age_Group = case_when(
+    Age < 20 ~ "<20",
+    Age >= 20 & Age < 30 ~ "20-29",
+    Age >= 30 & Age < 40 ~ "30-39",
+    Age >= 40 & Age < 50 ~ "40-49",
+    Age >= 50 ~ "50+"
+  ))
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Age_Group) & 
+    !is.na(Year)
+  )
+
+# Create the box plot
+ggplot(all_data, aes(x = Age_Group, y = Time_in_Minutes)) +
+  geom_boxplot(fill = "lightblue", outlier.color = "red", outlier.shape = 1) +
+  labs(
+    title = "Pace Distributions Across Age Groups (1973–2024)",
+    x = "Age Group",
+    y = "Pace (minutes per mile)"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12)
+  )
+```
+
+Histogram of finishing times for each year. (Years 1973 to 2024)
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Year)
+  )
+
+# Create the histogram faceted by year
+ggplot(all_data, aes(x = Time_in_Minutes)) +
+  geom_histogram(binwidth = 10, fill = "light blue", color = "light blue", alpha = 0.7) +
+  facet_wrap(~Year, scales = "free_y") +
+  labs(
+    title = "Histogram of Finishing Times by Year (1973–2024)",
+    x = "Finishing Time (minutes)",
+    y = "Count"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12),
+    strip.text = element_text(size = 10),
+    panel.spacing = unit(0.5, "lines")
+  )
+```
+
+Identify trends in runners completing just before the cutoff time. (Years 1973 to 2024)
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Year)
+  )
+
+# Define cutoff as the 90th percentile of finishing times for each year
+cutoff_data <- all_data %>%
+  group_by(Year) %>%
+  mutate(Cutoff_Time = quantile(Time_in_Minutes, 0.9, na.rm = TRUE)) %>%  # 90th percentile
+  ungroup()
+
+# Identify runners finishing close to the cutoff time
+cutoff_data <- cutoff_data %>%
+  mutate(Finishing_Close_To_Cutoff = Time_in_Minutes >= (Cutoff_Time - 10) & Time_in_Minutes <= Cutoff_Time)
+
+# Calculate the proportion of runners finishing close to the cutoff for each year
+cutoff_trends <- cutoff_data %>%
+  group_by(Year) %>%
+  summarize(
+    Total_Runners = n(),
+    Close_To_Cutoff = sum(Finishing_Close_To_Cutoff, na.rm = TRUE),
+    Proportion_Close_To_Cutoff = Close_To_Cutoff / Total_Runners,
+    .groups = "drop"
+  )
+
+# Visualize the trend over time
+ggplot(cutoff_trends, aes(x = Year, y = Proportion_Close_To_Cutoff)) +
+  geom_line(color = "lightblue", size = 1) +
+  geom_point(size = 2, color = "red") +
+  labs(
+    title = "Trend of Runners Finishing Close to Cutoff Time (1973–2024)",
+    x = "Year",
+    y = "Proportion of Runners Close to Cutoff"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12)
+  )
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Year)
+  )
+
+# Define cutoff as the 90th percentile of finishing times for each year
+cutoff_data <- all_data %>%
+  group_by(Year) %>%
+  mutate(Cutoff_Time = quantile(Time_in_Minutes, 0.9, na.rm = TRUE)) %>%  # 90th percentile
+  ungroup()
+
+# Identify runners finishing close to the cutoff time
+cutoff_data <- cutoff_data %>%
+  mutate(Finishing_Close_To_Cutoff = Time_in_Minutes >= (Cutoff_Time - 10) & Time_in_Minutes <= Cutoff_Time)
+
+# Calculate the number of runners finishing close to the cutoff for each year
+cutoff_trends <- cutoff_data %>%
+  group_by(Year) %>%
+  summarize(
+    Total_Runners = n(),
+    Close_To_Cutoff = sum(Finishing_Close_To_Cutoff, na.rm = TRUE),  # Actual count
+    .groups = "drop"
+  )
+
+# Visualize the trend over time
+ggplot(cutoff_trends, aes(x = Year, y = Close_To_Cutoff)) +
+  geom_line(color = "lightblue", size = 1) +
+  geom_point(size = 2, color = "red") +
+  labs(
+    title = "Number of Runners Finishing Close to Cutoff Time (1973–2024)",
+    x = "Year",
+    y = "Number of Runners Close to Cutoff"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12)
+  )
+```
+
+
+Scatter plot showing potential non-finishers (e.g., finishing at the race’s cutoff time). (Years 1973 to 2024)
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Year) &
+    !is.na(Name)  # Assuming 'Name' is critical for identifying individuals
+  )
+
+# Define potential non-finishers as those finishing in the 95th percentile or later
+potential_non_finishers <- all_data %>%
+  group_by(Year) %>%
+  mutate(Percentile95 = quantile(Time_in_Minutes, 0.95, na.rm = TRUE)) %>%
+  filter(Time_in_Minutes >= Percentile95) %>%
+  ungroup()
+
+# Create the scatter plot
+ggplot(potential_non_finishers, aes(x = Year, y = Time_in_Minutes, color = as.factor(Year))) +
+  geom_point(alpha = 0.6, size = 2) +
+  labs(
+    title = "Potential Non-Finishers Over Time (1973–2024)",
+    x = "Year",
+    y = "Finishing Time (minutes)",
+    color = "Year"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "right"
+  )
+```
+
+
+Fastest runner ever by Division (Years 1973 to 2024)
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Check and convert the 'Time' column to numeric (in minutes)
+if("Time" %in% colnames(all_data)) {
+    all_data <- all_data %>%
+        mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time, quiet = TRUE))) / 60)
+} else {
+    stop("The 'Time' column does not exist in the dataset.")
+}
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+    filter(
+        !is.na(Time_in_Minutes) & 
+        !is.na(Year) &
+        !is.na(Division) &
+        !is.na(Name)
+    )
+
+# Find the fastest runner ever in each division
+fastest_runners_by_division <- all_data %>%
+    group_by(Division) %>%
+    summarize(Fastest_Time = min(Time_in_Minutes), .groups = "drop")
+
+# Re-join to get details of the fastest runners
+fastest_runners_by_division <- all_data %>%
+    right_join(fastest_runners_by_division, by = c("Division", "Time_in_Minutes" = "Fastest_Time")) %>%
+    distinct(Division, .keep_all = TRUE) %>%
+    select(Division, Name, Year, Time_in_Minutes)
+
+# Output the results
+print(fastest_runners_by_division)
+```
+
+
+Box plots comparing the pace of repeat runners vs. single-race participants. (Years 1973 to 2024)
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Assuming all_data is already loaded and includes necessary columns: 'Name', 'Year', 'Time'
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+    mutate(
+        Time_in_Minutes = as.numeric(period_to_seconds(hms(Time, quiet = TRUE))) / 60,
+        Distance = ifelse(Year == 2015, 9.1, 10),  # Conditional distance based on the year
+        Pace_in_Minutes = Time_in_Minutes / Distance  # Calculate pace
+    )
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+    filter(
+        !is.na(Time_in_Minutes) & 
+        !is.na(Year) &
+        !is.na(Name) &
+        !is.na(Pace_in_Minutes)
+    )
+
+# Example: Proceed with analysis or visualization
+# For instance, you might want to visualize average pace trends for all participants
+average_pace_per_year <- all_data %>%
+    group_by(Year) %>%
+    summarize(Average_Pace = mean(Pace_in_Minutes, na.rm = TRUE))
+
+# Create a line graph to display the trends
+ggplot(average_pace_per_year, aes(x = Year, y = Average_Pace)) +
+    geom_line(color = "lightblue", size = 1) +
+    geom_point(color = "red", size = 2) +
+    labs(
+        title = "Average Pace Trends (1973–2024)",
+        x = "Year",
+        y = "Average Pace (minutes per mile)"
+    ) +
+    theme_bw() +
+    theme(
+        text = element_text(size = 12)
+    )
+```
+
+Sankey diagram (or equivalent) showing how runners transition between age groups over the years. (Years 1973 to 2024)
+```{r}
+if (!require("ggplot2")) install.packages("ggplot2")
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Ensure the dataset is loaded and includes the 'Year' and 'Age' columns
+# Here's a command to simulate loading data, replace with your actual data loading method
+# all_data <- read.csv("path_to_your_data.csv")
+
+# Calculate the average age per year
+average_age_per_year <- all_data %>%
+  filter(!is.na(Age) & !is.na(Year)) %>%  # Make sure to filter out missing values
+  group_by(Year) %>%
+  summarize(Average_Age = mean(Age, na.rm = TRUE)) %>%
+  ungroup()
+
+# Check the first few rows to ensure it looks correct
+head(average_age_per_year)
+
+# Generate a line graph of average age over the years
+age_plot <- ggplot(average_age_per_year, aes(x = Year, y = Average_Age)) +
+  geom_line(color = "lightblue", size = 1) +  # Draw lines
+  geom_point(color = "red", size = 2) +  # Add points
+  labs(title = "Average Age of Runners Over the Years",
+       x = "Year",
+       y = "Average Age") +
+  theme_bw() +
+  theme(text = element_text(size = 12))
+
+# Print the plot
+print(age_plot)
+```
+
+What percentage of runners run for more than 5 years straight  (Years 1973 to 2024)
+
+```{r}
+
+# Ensure data is sorted by Name and Year for consecutive checking
+all_data <- all_data %>%
+  arrange(Name, Year)
+# Identify consecutive participation
+all_data <- all_data %>%
+  group_by(Name) %>%
+  mutate(Consecutive = Year - lag(Year, default = Year[1] - 1) == 1) %>%
+  ungroup()
+all_data <- all_data %>%
+  group_by(Name) %>%
+  mutate(Consecutive_Streak = cumsum(!Consecutive)) %>%
+  group_by(Name, Consecutive_Streak) %>%
+  mutate(Year_Count = n()) %>%
+  ungroup()
+# Calculate runners with more than 5 consecutive years
+runners_with_5plus_years <- all_data %>%
+  group_by(Name) %>%
+  summarize(Max_Streak = max(Year_Count)) %>%
+  filter(Max_Streak > 5)
+
+# Calculate percentage
+total_runners <- n_distinct(all_data$Name)
+percentage_with_5plus_years <- nrow(runners_with_5plus_years) / total_runners * 100
+
+# Output the result
+percentage_with_5plus_years
+```
+
+
+
+
+
+
