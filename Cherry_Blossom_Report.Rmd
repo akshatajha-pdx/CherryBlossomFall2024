@@ -38,7 +38,7 @@ Data_22 <- Data_22 %>% select(-1)
 Data_23 <- Data_23 %>% select(-1)
 Data_24 <- Data_24 %>% select(-1)
 
-Dat_Comb <- rbind(Data_73_21, Data_22, Data_23, Data_24)
+Dat_Comb1 <- rbind(Data_73_21, Data_22, Data_23, Data_24)
 
 ```
 
@@ -46,7 +46,7 @@ Dat_Comb <- rbind(Data_73_21, Data_22, Data_23, Data_24)
 ## Data Cleaning
 Included just rows with existing age
 ```{r}
-Dat_Comb <- Dat_Comb %>%
+Dat_Comb <- Dat_Comb1 %>%
   filter(!is.na(Age))
 
 # Process Time and add new columns
@@ -94,7 +94,7 @@ Dat_Comb.full <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date
 ## Summary Statistics
 
 ```{r}
-graph1 <- Dat_Comb %>%
+graph1 <- Dat_Comb1 %>%
   group_by(Year) %>%
   add_count() %>%
   ungroup()
@@ -116,16 +116,14 @@ pander(fav_stats(graph1$n))
 ```
 
 ```{r}
-Dat_Comb %>% ggplot(aes(x=Year, fill=Gender)) +
+Dat_Comb1 %>% ggplot(aes(x=Year, fill=Gender)) +
   geom_bar(position="fill") +
- # scale_x_continuous(trans="identity", limits=c(1973,2024), breaks=seq(1973,2024,8)) +
   scale_fill_manual(values = c("M" = "turquoise", "W" = "salmon")) +
   labs(y="Proportion", title = "Proportion of Men and Women Participating Each Year") +
   geom_abline(aes(intercept=0.5, slope=0), color="black") +
   theme_bw()
-  #theme(axis.text.x=element_text(angle = 45, hjust = 1))
 
-graph2 <- Dat_Comb %>%
+graph2 <- Dat_Comb1 %>%
   group_by(Year, Gender) %>% 
   add_count() %>%
   ungroup()
@@ -135,7 +133,6 @@ pander(favstats(n ~ Gender, data=graph2))
 
 ```{r}
 graph3 <- Dat_Comb %>% 
-  filter(!is.na(Age)) %>% 
   mutate(Age_Group = case_when(
       Age < 20 ~ "Under 20",
       Age >= 20 & Age < 30 ~ "20s",
@@ -160,7 +157,7 @@ graph3 %>% ggplot(aes(x=Year, fill=Age_Group)) +
 ## Gender Insights
 
 ```{r}
-graph4 <- Dat_Comb %>% 
+graph4 <- Dat_Comb1 %>% 
   filter(!is.na(Pace)) %>% 
   filter(!is.na(Gender)) %>% 
   mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% 
@@ -168,8 +165,46 @@ graph4 <- Dat_Comb %>%
   ungroup()
 
 graph4 %>% ggplot(aes(y=avg_pace, x=Year, color=Gender)) +
-  geom_line()
+  geom_line() +
+  scale_color_manual(values = c("M" = "turquoise", "W" = "salmon")) +
+  scale_x_continuous(trans="identity", limits=c(1973,2024), breaks=seq(1973,2024,3)) +
+  labs(y="Average Pace (in Minutes)", title = "Average Pace Each Year by Gender") +
+  theme_bw()
+pander(favstats(avg_pace ~ Gender, data=graph4))
 ```
+
+
+```{r}
+Dat_Comb %>% 
+  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% 
+  filter(!is.na(Gender)) %>%
+  ggplot(aes(x=Year, y=Pace_Num, group=Year)) +
+  scale_x_continuous(trans="identity", limits=c(1973,2024), breaks=seq(1973,2024,3)) +
+  geom_boxplot() +
+  facet_wrap(~Gender) +
+  theme_bw() +
+  labs(x="Pace in Minutes", title="Distribution of Pace Each Year by Gender") +
+  theme(axis.text.x=element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+Dat_Comb %>% 
+  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% 
+  filter(!is.na(Gender)) %>%
+   mutate(Age_Group = case_when(
+      Age < 20 ~ "Under 20",
+      Age >= 20 & Age < 30 ~ "20s",
+      Age >= 30 & Age < 40 ~ "30s",
+      Age >= 40 & Age < 50 ~ "40s",
+      Age >= 50 & Age < 60 ~ "50s",
+      Age >= 60 & Age < 70 ~ "60s",
+      Age >= 70 ~ "70+")) %>% 
+  ggplot(aes(x=Gender, y=Age_Group, fill=Pace_Num)) +
+  geom_tile()
+```
+
+
 
 # Was Runners Performance Affected by Weather?
 ```{r}
