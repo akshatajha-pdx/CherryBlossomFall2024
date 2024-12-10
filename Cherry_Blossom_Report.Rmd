@@ -150,6 +150,8 @@ graph3 %>% ggplot(aes(x=Year, fill=Age_Group)) +
   theme_bw() +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0))
+
+pander(favstats(Dat_Comb1$Age))
 ```
 
 
@@ -178,13 +180,11 @@ pander(favstats(avg_pace ~ Gender, data=graph4))
 Dat_Comb %>% 
   mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% 
   filter(!is.na(Gender)) %>%
-  ggplot(aes(x=Year, y=Pace_Num, group=Year)) +
-  scale_x_continuous(trans="identity", limits=c(1973,2024), breaks=seq(1973,2024,3)) +
-  geom_boxplot() +
-  facet_wrap(~Gender) +
+  ggplot(aes(x=Pace_Num, group=Gender, fill=Gender)) +
+  geom_density(alpha=0.5) +
+  scale_fill_manual(values = c("M" = "turquoise", "W" = "salmon")) +
   theme_bw() +
-  labs(x="Pace in Minutes", title="Distribution of Pace Each Year by Gender") +
-  theme(axis.text.x=element_text(angle = 45, hjust = 1))
+  labs(x="Pace in Minutes", title="Distribution of Pace by Gender", y="Density")
 ```
 
 
@@ -193,15 +193,20 @@ Dat_Comb %>%
   mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% 
   filter(!is.na(Gender)) %>%
    mutate(Age_Group = case_when(
-      Age < 20 ~ "Under 20",
+      Age < 20 ~ "< 20",
       Age >= 20 & Age < 30 ~ "20s",
       Age >= 30 & Age < 40 ~ "30s",
       Age >= 40 & Age < 50 ~ "40s",
       Age >= 50 & Age < 60 ~ "50s",
       Age >= 60 & Age < 70 ~ "60s",
       Age >= 70 ~ "70+")) %>% 
-  ggplot(aes(x=Gender, y=Age_Group, fill=Pace_Num)) +
-  geom_tile()
+  summarise(avg_pace = mean(Pace_Num), .by=c(Gender, Age_Group)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x=Age_Group, y=Gender, fill=avg_pace)) +
+  geom_tile() +
+  labs(x="Age Group", legend="Average Pace", title="Average Pace by Gender and Age Group") +
+  theme_bw() +
+  scale_fill_viridis_c()
 ```
 
 
