@@ -39,6 +39,9 @@ Data_23 <- Data_23 %>% select(-1)
 Data_24 <- Data_24 %>% select(-1)
 
 Dat_Comb <- rbind(Data_73_21, Data_22, Data_23, Data_24)
+Dat_Comb <- Dat_Comb %>%
+  filter(!(Year == 2014 & Name == "Corinne Merriman" & Pace == "3:41"))
+
 
 ```
 
@@ -173,50 +176,41 @@ graph4 %>% ggplot(aes(y=avg_pace, x=Year, color=Gender)) +
 
 # Was Runners Performance Affected by Weather?
 ```{r}
-
-avg_per_year <- Dat_Comb.full %>%
+avg_per_year <- Dat_Comb.full %>% filter(Year != 2015) %>%
   group_by(Year) %>%
   summarise(
     Avg_PRCP = mean(PRCP, na.rm = TRUE),
-    winner=min(Minutes, na.rm = TRUE),
-    Temperature = mean(TMIN, na.rm = TRUE),
-    Minutes = mean(Minutes, na.rm = TRUE)
+    winner = min(Minutes, na.rm = TRUE),
+    Temperature = mean(TMIN, na.rm = TRUE)
   )
 
 # Adjusted Plot
 ggplot(avg_per_year, aes(x = Year)) +
-  # Line for Avg_Pace
-  geom_line(aes(y = Minutes, color = "Average Pace (min)"), size = .3) +
   # Line for Avg_PRCP
   geom_line(aes(y = Avg_PRCP * 10, color = "Precipitation (scaled)"), size = 0.3) +
   # Line for Temperature
   geom_line(aes(y = Temperature, color = "Temperature (°F)"), size = 0.3) +
-  # Primary and secondary y-axis
-  geom_line(aes(y=winner, color="Winner"), size=0.3) +
+  # Line for Winner time
+  geom_line(aes(y = winner, color = "Winner time"), size = 0.3) +
   scale_y_continuous(
-    name = "Pace & Temperature",
+    name = "Temperature & Winner Time",
     sec.axis = sec_axis(~ . / 10, name = "Precipitation")
   ) +
   # Custom color legend
   scale_color_manual(
     name = "Legend",
     values = c(
-      "Average Pace (min)" = "blue",
       "Precipitation (scaled)" = "green",
       "Temperature (°F)" = "red",
-      "Winner Time" = "black"
+      "Winner time" = "black"
     )
   ) +
   labs(
-    title = "Average Time, Precipitation, and Temperature by Year",
+    title = "Precipitation, Temperature, and Winner Time by Year",
     x = "Year"
   ) +
   theme_bw()
 
 
-avg_per_year
-head(Dat_Comb.full)
-
 ```
-
 
