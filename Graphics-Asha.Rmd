@@ -18,15 +18,58 @@ library(lubridate)
 library(mosaic)
 library(ggplot2)
 library(pander)
-Data_73_21 <- read_csv("Data_73_21.csv")
-Data_22 <- read_csv("Data_22.csv")
-Data_23 <- read_csv("Data_23.csv")
-Data_24 <- read_csv("Data_24.csv")
+
+Data_73_21 <- read_csv("Data_73_21.csv", na=c("NR", "NA"), col_types = "ccnccccccn")
+Data_22 <- read_csv("Data_22.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
+Data_23 <- read_csv("Data_23.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
+Data_24 <- read_csv("Data_24.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
 ```
 
 
+Line graph showing average race times across different age groups over time.
 
 ```{r}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Assuming `Data_73_21` is the dataset containing the race data
+# Convert Time to numeric (in minutes)
+Data_73_21 <- Data_73_21 %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Create age groups (optional, if not already grouped)
+Data_73_21 <- Data_73_21 %>%
+  mutate(Age_Group = case_when(
+    Age < 20 ~ "<20",
+    Age >= 20 & Age < 30 ~ "20-29",
+    Age >= 30 & Age < 40 ~ "30-39",
+    Age >= 40 & Age < 50 ~ "40-49",
+    Age >= 50 ~ "50+"
+  ))
+
+# Calculate average race time for each age group over years
+average_race_times <- Data_73_21 %>%
+  group_by(Year, Age_Group) %>%
+  summarize(Average_Time = mean(Time_in_Minutes, na.rm = TRUE)) %>%
+  ungroup()
+
+# Create the line graph
+ggplot(data = average_race_times, aes(x = Year, y = Average_Time, color = Age_Group)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Average Race Times Across Age Groups Over Time",
+    x = "Year",
+    y = "Average Race Time (minutes)",
+    color = "Age Group"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "bottom"
+  )
+
 ```
 
 
