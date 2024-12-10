@@ -1,0 +1,40 @@
+---
+title: "Graphics-Asha"
+output: html_document
+date: "2024-12-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("pander")
+install.packages("lubridate")
+install.packages("mosaic")
+install.packages("ggplot2")
+
+library(readr)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(mosaic)
+library(ggplot2)
+library(pander)
+Data_73_21 <- read_csv("Data_73_21.csv")
+Data_22 <- read_csv("Data_22.csv")
+Data_23 <- read_csv("Data_23.csv")
+Data_24 <- read_csv("Data_24.csv")
+```
+
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```

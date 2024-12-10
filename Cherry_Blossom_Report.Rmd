@@ -3,10 +3,13 @@ title: "Cherry Blossom Race Data"
 output: html_document
 ---
 
-
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+install.packages("pander")
+install.packages("lubridate")
+install.packages("mosaic")
+install.packages("ggplot2")
+
 library(readr)
 library(dplyr)
 library(tidyverse)
@@ -14,9 +17,6 @@ library(lubridate)
 library(mosaic)
 library(ggplot2)
 library(pander)
-
-
-
 Data_73_21 <- read_csv("Data_73_21.csv", na=c("NR", "NA"), col_types = "ccnccccccn")
 Data_22 <- read_csv("Data_22.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
 Data_23 <- read_csv("Data_23.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
@@ -38,63 +38,43 @@ Data_22 <- Data_22 %>% select(-1)
 Data_23 <- Data_23 %>% select(-1)
 Data_24 <- Data_24 %>% select(-1)
 
-Dat_Comb1 <- rbind(Data_73_21, Data_22, Data_23, Data_24)
-
+Dat_Comb <- rbind(Data_73_21, Data_22, Data_23, Data_24)
 ```
 
 
 ## Data Cleaning
 Included just rows with existing age
 ```{r}
-Dat_Comb <- Dat_Comb1 %>%
-  filter(!is.na(Age))
-
-# Process Time and add new columns
-Dat_Comb <- Dat_Comb %>%
-  mutate(
-    Time = na_if(Time, "NR"),          
-    Time = na_if(Time, ""),            
-    Time = case_when(
-      str_detect(Time, "^\\d{1,2}:\\d{1,2}$") ~ paste0("00:", Time), # Add "00:" for missing hours
-      str_detect(Time, "^\\d{1,2}:\\d{1,2}:\\d{1,2}$") ~ Time,       
-      TRUE ~ NA_character_             # Replace invalid formats with NA
-    ),
-    Time = hms(Time),                  # Convert valid Time to hms format
-    Minutes = period_to_seconds(Time) / 60 # Calculate time in minutes
-  ) %>%
-  filter(!is.na(Time))                 # Remove rows with missing Time
-
+Dat_Comb 
+Dat_Comb.with_age <- Dat_Comb %>% filter(!is.na(Age))
 
 ```
 
-## Adding weatherinfos
+This adds the precipitation and minimum temperature for that date
 ```{r}
+library(readr)
+weather <- read_csv("C:/Users/andri/Downloads/weatherdat.csv",show_col_types = FALSE)
 
-weather <- read_csv("3865927.csv",show_col_types = FALSE)
 dates <- data.frame(
-  year = 1973:2024,
+  year = 1973:1982,
   date = as.Date(c("1973-04-01", "1974-03-31", "1975-04-06", "1976-04-04", 
-                   "1977-04-03", "1978-04-02", "1979-04-01", "1980-03-30", 
-                   "1981-04-05", "1982-04-04", "1983-04-03", "1984-04-01", 
-                   "1985-03-31", "1986-04-06", "1987-04-05", "1988-04-03", 
-                   "1989-04-02", "1990-04-01", "1991-03-31", "1992-04-05", 
-                   "1993-04-04", "1994-04-03", "1995-04-02", "1996-03-31", 
-                   "1997-04-06", "1998-04-05", "1999-04-04", "2000-04-02", 
-                   "2001-04-01", "2002-04-07", "2003-04-06", "2004-04-04", 
-                   "2005-04-03", "2006-04-02", "2007-04-01", "2008-04-06", 
-                   "2009-04-05", "2010-04-04", "2011-04-03", "2012-04-01", 
-                   "2013-04-07", "2014-04-06", "2015-04-05", "2016-04-03", 
-                   "2017-04-02", "2018-04-07", "2019-04-06", "2020-04-05", 
-                   "2021-09-12", "2022-04-03", "2023-04-02", "2024-04-6")))
+           "1977-04-03", "1978-04-02", "1979-04-01", "1980-03-30", 
+           "1981-04-05", "1982-04-04"))
+)
 
-temp<-left_join(Dat_Comb, dates, by = c("Year" = "year"))
-Dat_Comb.full <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date" = "DATE"))
+temp<-left_join(Dat_Comb.with_age, dates, by = c("Year" = "year"))
+sample_n(temp, 10)
+
+
+Dat_Comb.weather_and_age <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date" = "DATE"))
+sample_n(Dat_Comb.all, 10)
+Dat_Comb.weather_and_age
 ```
 
 ## Summary Statistics
 
 ```{r}
-graph1 <- Dat_Comb1 %>%
+graph1 <- Dat_Comb %>%
   group_by(Year) %>%
   add_count() %>%
   ungroup()
@@ -116,14 +96,16 @@ pander(fav_stats(graph1$n))
 ```
 
 ```{r}
-Dat_Comb1 %>% ggplot(aes(x=Year, fill=Gender)) +
+Dat_Comb %>% ggplot(aes(x=Year, fill=Gender)) +
   geom_bar(position="fill") +
+ # scale_x_continuous(trans="identity", limits=c(1973,2024), breaks=seq(1973,2024,8)) +
   scale_fill_manual(values = c("M" = "turquoise", "W" = "salmon")) +
   labs(y="Proportion", title = "Proportion of Men and Women Participating Each Year") +
   geom_abline(aes(intercept=0.5, slope=0), color="black") +
   theme_bw()
+  #theme(axis.text.x=element_text(angle = 45, hjust = 1))
 
-graph2 <- Dat_Comb1 %>%
+graph2 <- Dat_Comb %>%
   group_by(Year, Gender) %>% 
   add_count() %>%
   ungroup()
@@ -133,6 +115,7 @@ pander(favstats(n ~ Gender, data=graph2))
 
 ```{r}
 graph3 <- Dat_Comb %>% 
+  filter(!is.na(Age)) %>% 
   mutate(Age_Group = case_when(
       Age < 20 ~ "Under 20",
       Age >= 20 & Age < 30 ~ "20s",
@@ -154,12 +137,17 @@ graph3 %>% ggplot(aes(x=Year, fill=Age_Group)) +
 pander(favstats(Dat_Comb1$Age))
 ```
 
+```{r}
+Dat_Comb 
+Dat_Comb[,Age] %>% is.na() %>% sum()
+```
+
 
 
 ## Gender Insights
 
 ```{r}
-graph4 <- Dat_Comb1 %>% 
+graph4 <- Dat_Comb %>% 
   filter(!is.na(Pace)) %>% 
   filter(!is.na(Gender)) %>% 
   mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% 
