@@ -71,19 +71,29 @@ Age, as one of the most critical factors in endurance sports, plays a central ro
 
 ##### Data
 
-The dataset for this project contains over 400,000 race observations spanning more than 50 years of the Cherry Blossom 10-Mile Race. It includes detailed participant-level data with the following variables:
+The dataset for this project is a comprehensive collection of over 400,000 race observations spanning more than 50 years of the Cherry Blossom 10-Mile Race. It provides an extensive look into the performance and demographics of participants, offering a unique opportunity to analyze long-term trends in endurance running. The dataset includes the following detailed participant-level variables:
 
-Name: Name of the participant.
-PiD_TiD: Rank within their division.
-PiS_TiS: Rank position within their gender
-Age: Age of the participant during the race.
-Time: Official finish time of the participant.
-Pace: Average pace per mile during the race.
-Division: Age and gender category of the participant (e.g., M0119 = Male, ages 0-19).
-Hometown: Participant’s hometown (some entries are missing).
-Year: Year in which the race took place.
-Gender: Gender of the participant (M = Male, W = Female).
+	•	Name: The name of the participant, serving as an identifier.
+	
+	•	PiD_TiD: Rank within the participant’s specific division (e.g., age and gender category).
+	
+	•	PiS_TiS: Overall rank within the participant’s gender group.
+	
+	•	Age: The participant’s age at the time of the race, a key variable for analyzing performance trends.
+	
+	•	Time: The official finish time recorded for each participant, reflecting their overall performance.
+	
+	•	Pace: The average pace per mile, calculated based on the finish time and race distance.
+	
+	•	Division: The participant’s age and gender category (e.g., “M0119” represents males aged 0-19).
+	
+	•	Hometown: The participant’s place of residence (note: some entries are incomplete or missing).
+	
+	•	Year: The year in which the race took place, allowing for the analysis of historical trends.
+	
+	•	Gender: The participant’s gender, categorized as “M” (Male) or “W” (Female).
 
+This provides a comprehensive source for understanding how age, gender, and other demographic variables influence performance in endurance races. 
 
 ```{r}
 graph1 <- Dat_Comb1 %>%
