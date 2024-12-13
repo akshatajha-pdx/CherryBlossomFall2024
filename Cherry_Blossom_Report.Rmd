@@ -126,8 +126,13 @@ View(Dat_Comb.with_age)
 
 ## Adding weatherinfos
 ```{r}
+<<<<<<< HEAD
 
 weather <- read_csv("3865927.csv",show_col_types = FALSE)
+=======
+library(readr)
+weather <- read_csv("3865927.csv")
+>>>>>>> 958382deb3cf437ac1f773b94278f82011540691
 dates <- data.frame(
   year = 1973:2024,
   date = as.Date(c("1973-04-01", "1974-03-31", "1975-04-06", "1976-04-04", 
@@ -144,8 +149,17 @@ dates <- data.frame(
                    "2017-04-02", "2018-04-07", "2019-04-06", "2020-04-05", 
                    "2021-09-12", "2022-04-03", "2023-04-02", "2024-04-6")))
 
+<<<<<<< HEAD
 temp<-left_join(Dat_Comb, dates, by = c("Year" = "year"))
 Dat_Comb.full <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date" = "DATE"))
+=======
+temp<-left_join(Dat_Comb.with_age, dates, by = c("Year" = "year"))
+sample_n(temp, 10)
+
+
+Dat_Comb.weather_and_age <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date" = "DATE"))
+Dat_Comb.weather_and_age
+>>>>>>> 958382deb3cf437ac1f773b94278f82011540691
 ```
 
 ## Summary Statistics
