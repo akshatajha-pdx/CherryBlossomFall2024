@@ -507,7 +507,7 @@ potential_non_finishers <- all_data %>%
 ggplot(potential_non_finishers, aes(x = Year, y = Time_in_Minutes, color = as.factor(Year))) +
   geom_point(alpha = 0.6, size = 2) +
   labs(
-    title = "Potential Non-Finishers Over Time (1973–2024)",
+    title = "Finishers Outliers Over Time (1973–2024)",
     x = "Year",
     y = "Finishing Time (minutes)",
     color = "Year"

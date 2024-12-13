@@ -1,0 +1,79 @@
+---
+title: "Untitled"
+author: "Breanna Neuwirth"
+date: "2024-12-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(mosaic)
+library(ggplot2)
+library(pander)
+Data_73_21 <- read_csv("Data_73_21.csv", na=c("NR", "NA"), col_types = "ccnccccccn")
+Data_22 <- read_csv("Data_22.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
+Data_23 <- read_csv("Data_23.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
+Data_24 <- read_csv("Data_24.csv", col_types = "ncccnccccnc", na=c("NR", "NA"))
+```
+
+
+
+```{r}
+Data_73_21 <- Data_73_21 %>% 
+  separate(Name, c("Name", "Gender"), sep = -4) %>% 
+  mutate(Gender = case_when(Gender == " (M)" ~ "M",
+                            Gender == " (W)" ~ "W")) %>% 
+  rename(PiS_TiS = `PiS/TiS`, PiD_TiD = `PiD/TiD`) %>% 
+  select(1,2,9,7,4,5,6,8,10,11,3) %>% 
+  select(-1)
+
+Data_22 <- Data_22 %>% select(-1)
+Data_23 <- Data_23 %>% select(-1)
+Data_24 <- Data_24 %>% select(-1)
+
+Dat_Comb <- rbind(Data_73_21, Data_22, Data_23, Data_24)
+
+Dat_Comb <- Dat_Comb %>%
+   mutate(Time = na_if(Time, ""),
+          Time = case_when(str_detect(Time, "^\\d{1,2}:\\d{1,2}$") ~ paste0("00:", Time), # Add "00:" for missing hours
+                           str_detect(Time, "^\\d{1,2}:\\d{1,2}:\\d{1,2}$") ~ Time, 
+                           TRUE ~ NA_character_             # Replace invalid formats with NA
+          ),
+          Time = hms(Time),                  # Convert valid Time to hms format
+          Minutes = period_to_seconds(Time) / 60 # Calculate time in minutes
+   ) %>%
+  filter(!is.na(Time))  
+```
+
+
+
+```{r}
+mod1 <- lm(Minutes ~ Age, data=Dat_Comb)
+pander(summary(mod1))
+
+mod2 <- lm(Minutes ~ Age + Gender, data=Dat_Comb)
+pander(summary(mod2))
+
+mod3 <- lm(Minutes ~ Age + Gender + Year, data=Dat_Comb)
+pander(summary(mod3))
+
+mod4 <- lm(Minutes ~ Age*Gender*Year, data=Dat_Comb)
+pander(summary(mod4))
+plot(mod4)
+
+Dat_Comb %>% 
+  filter(!is.na(Gender)) %>%
+  ggplot(aes(x=Year, y=Minutes, color=Age, group=Age)) +
+  geom_point(alpha=0.1) +
+  geom_smooth(method=lm, linewidth=1.2) +
+  facet_wrap(~Gender)
+  #scale_color_manual(values = c("M" = "turquoise", "W" = "salmon")) +
+  labs(y="Run Time in Minutes", title="Predicting Runtime by Age, Gender, and Year") +
+  theme_bw()
+```
+
+
