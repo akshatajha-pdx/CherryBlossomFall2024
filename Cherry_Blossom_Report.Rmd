@@ -3,12 +3,50 @@ title: "Cherry Blossom Race Data"
 output: html_document
 ---
 
+##### Introduction
+The primary question in this consulting project is: How does age influence athletic performance in the Cherry Blossom 10-Mile Race? The goal is to provide a clear and simple answer to understand how age and other factors impacts race performance.
+With the help of our client we were able to scrape around 400,000 observations from the Race Data website into a R dataframe which then gave us a lof of data to analyze for trends
+
+##### Background
+The Cherry Blossom 10-Mile Race began as a small local event in Washington, D.C., designed to bring the community together for a fun and challenging experience. Over time, it has grown into a renowned annual event, attracting thousands of runners from across the country and around the world. Its rich history, spanning five decades, provides us a dataset with thousands of entries to explore long-term trends in athletic performance.
+Age plays a notable role in endurance races, with performance generally peaking in early adulthood and gradually decreasing with age. This project seeks to analyze how age affects race performance and identify key trends over time.
+
+
+##### Data
+
+The dataset for this project contains over 400,000 race observations spanning more than 50 years of the Cherry Blossom 10-Mile Race. It includes detailed participant-level data with the following variables:
+
+Name: Name of the participant.
+PiD_TiD: Rank within their division.
+PiS_TiS: Rank position within their gender
+Age: Age of the participant during the race.
+Time: Official finish time of the participant.
+Pace: Average pace per mile during the race.
+Division: Age and gender category of the participant (e.g., M0119 = Male, ages 0-19).
+Hometown: Participant’s hometown (some entries are missing).
+Year: Year in which the race took place.
+Gender: Gender of the participant (M = Male, W = Female).
+
+
+##### Data Collection and Challenges
+
+This dataset was collected by scraping results from the Cherry Blossom Race website. While the client provided some guidance, the scraping process was a difficult process as the website was not designed for easy data extraction. The data was collected in multiple files, each covering a different time period, and required extensive cleaning and preprocessing to make it suitable for analysis. The data was then combined into a single dataframe for further analysis.
+
+##### Data Cleaning and Preprocessing
+
+After collecting the data, the following steps were taken to clean and prepare it for analysis:
+
+Handling Missing Values: We had a lot of columns with missing values, we had to decide whether to drop them or fill them with a value.
+Changing variable type: Columns such as Time and Pace were converted into numeric formats so they were easier to work with.
+Removing Outliers: Implausible race times or paces (e.g., unrealistically fast finish times) were identified and excluded.
+
+
+
+
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-install.packages("pander")
-install.packages("lubridate")
-install.packages("mosaic")
-install.packages("ggplot2")
 
 library(readr)
 library(dplyr)
@@ -47,6 +85,7 @@ Included just rows with existing age
 ```{r}
 Dat_Comb 
 Dat_Comb.with_age <- Dat_Comb %>% filter(!is.na(Age))
+View(Dat_Comb.with_age)
 
 ```
 
@@ -328,6 +367,7 @@ lm_weather <- lm(DetrendedTime ~ AvgTemp + AvgPrecip, data = avg_running_time)
 summary(lm_weather)
 
 ```
+
 ```{r}
 # Filter data for specific age groups and genders
 filtered_data <- Dat_Comb.full %>%
@@ -351,6 +391,39 @@ ggplot(performance_by_age, aes(x = Year, y = Average_Time, color = Age_Group)) +
     color = "Age"
   ) +
   theme_bw()
+
+```
+
+```{r}
+
+top25 <- Dat_Comb.full %>%
+  group_by(Year, Gender) %>%
+  arrange(Minutes) %>%
+  slice_head(n = 25) %>%
+  ungroup()
+
+# Calculate the mean of the top 25 for each Year and Gender
+mean_top25_times <- top25 %>% filter(Gender %in% c("M", "W") ) %>%
+  group_by(Year, Gender) %>%
+  summarise(mean_minutes = mean(Minutes, na.rm = TRUE)) %>%
+  ungroup()
+
+# Filter the data to exclude years before 1983 and specific years 2015 and 2020
+filtered_data <- mean_top25_times %>%
+  filter(Year > 1982, !Year %in% c(2015, 2020))
+
+ggplot(filtered_data, aes(x = Year, y = mean_minutes, color = Gender)) +
+  geom_point() +
+  geom_smooth(method = "loess",scale=0.2, se = TRUE, aes(fill = Gender)) +
+  labs(
+    title = "Mean Top 25 Time by Year and Gender over the Years",
+    x = "Year",
+    y = "Mean Minutes"
+  ) +
+  theme_bw()
+
+
+
 
 ```
 
