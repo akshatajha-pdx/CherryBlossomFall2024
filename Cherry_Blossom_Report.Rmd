@@ -55,6 +55,7 @@ Dat_Comb <- Dat_Comb1 %>%
   filter(Year > 1980)
 ```
 
+
 ##### Introduction
 The primary question in this consulting project is: How does age influence athletic performance in the Cherry Blossom 10-Mile Race? The goal is to provide a clear and simple answer to understand how age and other factors impact race performance.
 With the help of our client we were able to scrape around 400,000 observations from the Race Data website into a dataframe which then gave us a lot of data to analyze for trends.
@@ -78,6 +79,7 @@ Division: Age and gender category of the participant (e.g., M0119 = Male, ages 0
 Hometown: Participant’s hometown (some entries are missing).
 Year: Year in which the race took place.
 Gender: Gender of the participant (M = Male, W = Female).
+
 
 ```{r}
 graph1 <- Dat_Comb1 %>%
@@ -125,8 +127,7 @@ Here we can see the proportion of men and women who have participated in the rac
 
 
 ```{r}
-graph3 <- Dat_Comb1 %>%
-  filter(!is.na(Age)) %>% 
+graph3 <- Dat_Comb %>% 
   mutate(Age_Group = case_when(
       Age < 20 ~ "Under 20",
       Age >= 20 & Age < 30 ~ "20s",
@@ -172,12 +173,12 @@ Removing Early Years: There were issues with the data in the first few years of 
 
 
 
-## Cherry Blossom Race Data 1973-2024
 
 
-## Data Cleaning
 
+#### Appendices
 
+##### Appendix 1: Data  and Data Cleaning Code
 
 This adds the precipitation and minimum temperature for that date
 ```{r}
@@ -204,12 +205,6 @@ sample_n(temp, 10)
 
 Dat_Comb.weather <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date" = "DATE"))
 ```
-
-#### Appendices
-
-##### Appendix 1: Data Cleaning Code
-
-
 
 ##### Appendix 2: Summary Statistics Code
 
@@ -247,7 +242,7 @@ Dat_Comb %>%
 ```{r}
 Dat_Comb %>%
    mutate(Age_Group = case_when(
-      Age < 20 ~ "< 20",
+      Age < 20 ~ ">20",
       Age >= 20 & Age < 30 ~ "20s",
       Age >= 30 & Age < 40 ~ "30s",
       Age >= 40 & Age < 50 ~ "40s",
@@ -267,7 +262,6 @@ Dat_Comb %>%
 
 ## Was Runners Performance Affected by Weather?
 ```{r}
-
 avg_per_year <- Dat_Comb.weather %>%
   group_by(Year) %>%
   summarise(
@@ -285,6 +279,8 @@ ggplot(avg_per_year, aes(x = Year)) +
   geom_line(aes(y = Avg_PRCP * 10, color = "Precipitation (scaled)"), size = 0.3) +
   # Line for Temperature
   geom_line(aes(y = Temperature, color = "Temperature (°F)"), size = 0.3) +
+  # Line for Winner time
+  geom_line(aes(y = winner, color = "Winner time"), size = 0.3) +
   # Primary and secondary y-axis
   geom_line(aes(y=winner, color="Winner"), size=0.3) +
   scale_y_continuous(
@@ -295,20 +291,23 @@ ggplot(avg_per_year, aes(x = Year)) +
   scale_color_manual(
     name = "Legend",
     values = c(
+      "Precipitation (scaled)" = "green",
+      "Temperature (°F)" = "red",
+      "Winner time" = "black"
+    )
+  ) +
+  labs(
+    title = "Precipitation, Temperature, and Winner Time by Year",
       "Average Pace (min)" = "blue",
       "Precipitation (scaled)" = "green",
       "Temperature (°F)" = "red",
       "Winner Time" = "black"
-    )
   ) +
   labs(
     title = "Average Time, Precipitation, and Temperature by Year",
     x = "Year"
   ) +
   theme_bw()
-
-
-#avg_per_year
 ```
 
 
@@ -324,7 +323,7 @@ summary(mod2)
 
 mod3 <- lm(Minutes ~ Age*Gender, data=Dat_Comb)
 summary(mod3)
-plot(mod3)
+#plot(mod3)
 
 Dat_Comb %>% 
   ggplot(aes(x=Age, y=Minutes, color=Gender)) +
