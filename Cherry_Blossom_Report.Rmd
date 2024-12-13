@@ -59,8 +59,8 @@ Dat_Comb <- Dat_Comb1 %>%
 ##### Introduction
 
 The primary question in this consulting project is: How does age influence athletic performance in the Cherry Blossom 10-Mile Race? This study aims to provide a comprehensive understanding and a simple answer to understand how age and other factors shape the race performance in an endurance event.
-With the help of our client we were able to scrape around 400,000 observations from the Race Data website into a dataframe which then gave us a lot of data to analyze for trends.
 
+To investigate this, we worked closely with our client by doing this we were able to scrape around 400,000 individual race records from the Cherry Blossom Race Data website. This dataset spans over 51 years worth of information such as participants' ages, genders, finish times, paces and rankings. This gave us the unique opportunity to dive into finding and understanding the trends and patterns. We were able to explore how performance differs in across different age groups, how performance differs across genders, and much more. Our aim is to uncover meaningful insights that will be insightful for our client.
 
 ##### Background
 The Cherry Blossom 10-Mile Race began as a small local event in Washington, D.C., designed to bring the community together for a fun and challenging experience. Over time, it has grown into a renowned annual event, attracting thousands of runners from across the country and around the world. Its rich history, spanning five decades, provides us a dataset with thousands of entries to explore long-term trends in athletic performance.
