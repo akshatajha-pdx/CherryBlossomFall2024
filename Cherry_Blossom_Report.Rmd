@@ -92,8 +92,7 @@ View(Dat_Comb.with_age)
 This adds the precipitation and minimum temperature for that date
 ```{r}
 library(readr)
-weather <- read_csv("C:/Users/andri/Downloads/weatherdat.csv",show_col_types = FALSE)
-
+weather <- read_csv("3865927.csv")
 dates <- data.frame(
   year = 1973:1982,
   date = as.Date(c("1973-04-01", "1974-03-31", "1975-04-06", "1976-04-04", 
@@ -106,7 +105,6 @@ sample_n(temp, 10)
 
 
 Dat_Comb.weather_and_age <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date" = "DATE"))
-sample_n(Dat_Comb.all, 10)
 Dat_Comb.weather_and_age
 ```
 
