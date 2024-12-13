@@ -151,7 +151,6 @@ graph3 %>% ggplot(aes(x=Year, fill=Age_Group)) +
 pander(favstats(Dat_Comb1$Age))
 ```
 
-<<<<<<< HEAD
 Here we can see the number of participants for different age groups across the years of the race. The majority of runners are in their 20s and 30s. There is no age restriction for the race, so the range is rather large from 2 years old to 91 years old. The average age is about 36 years old. 
 
 ##### Data Collection and Challenges
