@@ -58,7 +58,7 @@ Dat_Comb <- Dat_Comb1 %>%
 
 ##### Introduction
 
-The primary question in this consulting project is: How does age influence athletic performance in the Cherry Blossom 10-Mile Race? The goal is to provide a clear and simple answer to understand how age and other factors impact race performance.
+The primary question in this consulting project is: How does age influence athletic performance in the Cherry Blossom 10-Mile Race? This study aims to provide a comprehensive understanding and a simple answer to understand how age and other factors shape the race performance in an endurance event.
 With the help of our client we were able to scrape around 400,000 observations from the Race Data website into a dataframe which then gave us a lot of data to analyze for trends.
 
 
@@ -168,7 +168,43 @@ Removing Early Years: There were issues with the data in the first few years of 
 
 #### Methods
 
-##Age Insights
+
+#### Appendices
+
+##### Appendix 1: Data  and Data Cleaning Code
+
+This adds the precipitation and minimum temperature for that date
+```{r}
+#library(readr)
+weather <- read_csv("3865927.csv", show_col_types = F)
+
+dates <- data.frame(
+  year = 1981:2024,
+  date = as.Date(c("1981-04-05", "1982-04-04", "1983-04-03", "1984-04-01", 
+                   "1985-03-31", "1986-04-06", "1987-04-05", "1988-04-03", 
+                   "1989-04-02", "1990-04-01", "1991-03-31", "1992-04-05", 
+                   "1993-04-04", "1994-04-03", "1995-04-02", "1996-03-31", 
+                   "1997-04-06", "1998-04-05", "1999-04-04", "2000-04-02", 
+                   "2001-04-01", "2002-04-07", "2003-04-06", "2004-04-04", 
+                   "2005-04-03", "2006-04-02", "2007-04-01", "2008-04-06", 
+                   "2009-04-05", "2010-04-04", "2011-04-03", "2012-04-01", 
+                   "2013-04-07", "2014-04-06", "2015-04-05", "2016-04-03", 
+                   "2017-04-02", "2018-04-07", "2019-04-06", "2020-04-05", 
+                   "2021-09-12", "2022-04-03", "2023-04-02", "2024-04-6")))
+
+temp<-left_join(Dat_Comb, dates, by = c("Year" = "year"))
+sample_n(temp, 10)
+
+
+Dat_Comb.weather <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date" = "DATE"))
+```
+
+##### Appendix 2: Summary Statistics Code
+
+
+#### Appendix 3: Age Insights Code
+
+This blocks ensures all race data is combined into one dataset, making it easier to clean, manipulate and visualize.
 
 ```{r}
 library(ggplot2)
@@ -218,7 +254,10 @@ ggplot(data = average_race_times, aes(x = Year, y = Average_Time, color = Age_Gr
   )
 
 ```
+The grouping above makes it easier to analyze trends across age groups instead of focusing on individual ages, the insights showed that participants <20 and between 20 to 29 were faster than participants 50+
 
+
+We convert the race completion times into minutes for mathematical operations. This shows the average race time for each age group, year, and division.
 ```{r}
 library(ggplot2)
 library(dplyr)
@@ -273,7 +312,10 @@ ggplot(data = average_race_times, aes(x = Year, y = Average_Time, color = Age_Gr
   )
 
 ```
+This shows the average finishing time of each age group. As shown previously this plot proves again that people in these groups <20 and 20-29 have a shorter average in finishing time.
 
+
+This code focuses on creating a box plot to visualize the distribution of race paces across different age groups from 1973 to 2024.
 ```{r}
 library(ggplot2)
 library(dplyr)
@@ -317,55 +359,8 @@ ggplot(all_data, aes(x = Age_Group, y = Time_in_Minutes)) +
     text = element_text(size = 12)
   )
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### Appendices
-
-##### Appendix 1: Data  and Data Cleaning Code
-
-This adds the precipitation and minimum temperature for that date
-```{r}
-#library(readr)
-weather <- read_csv("3865927.csv", show_col_types = F)
-
-dates <- data.frame(
-  year = 1981:2024,
-  date = as.Date(c("1981-04-05", "1982-04-04", "1983-04-03", "1984-04-01", 
-                   "1985-03-31", "1986-04-06", "1987-04-05", "1988-04-03", 
-                   "1989-04-02", "1990-04-01", "1991-03-31", "1992-04-05", 
-                   "1993-04-04", "1994-04-03", "1995-04-02", "1996-03-31", 
-                   "1997-04-06", "1998-04-05", "1999-04-04", "2000-04-02", 
-                   "2001-04-01", "2002-04-07", "2003-04-06", "2004-04-04", 
-                   "2005-04-03", "2006-04-02", "2007-04-01", "2008-04-06", 
-                   "2009-04-05", "2010-04-04", "2011-04-03", "2012-04-01", 
-                   "2013-04-07", "2014-04-06", "2015-04-05", "2016-04-03", 
-                   "2017-04-02", "2018-04-07", "2019-04-06", "2020-04-05", 
-                   "2021-09-12", "2022-04-03", "2023-04-02", "2024-04-6")))
-
-temp<-left_join(Dat_Comb, dates, by = c("Year" = "year"))
-sample_n(temp, 10)
-
-
-Dat_Comb.weather <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("date" = "DATE"))
-```
-
-##### Appendix 2: Summary Statistics Code
-
-
-
-
-
+The findings of <20 group typically has higher variability, possibly due to a mix of highly competitive younger runners and casual participants. The 20-29 group tends to have the fastest median pace, confirming prior research that peak endurance occurs in the late 20s.
+	
 #### Appendix 3: Gender Insights Code
 
 ```{r}
