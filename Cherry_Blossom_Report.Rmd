@@ -7,7 +7,7 @@ output: html_document
 =======
 ##### Introduction
 The primary question in this consulting project is: How does age influence athletic performance in the Cherry Blossom 10-Mile Race? The goal is to provide a clear and simple answer to understand how age and other factors impacts race performance.
-With the help of our client we were able to scrape around 400,000 observations from the Race Data website into a R dataframe which then gave us a lof of data to analyze for trends
+With the help of our client we were able to scrape around 400,000 observations from the Cherry Blossom Race Data website into a R dataframe. Using this gave us a lot of data to analyze for trends
 
 ##### Background
 The Cherry Blossom 10-Mile Race began as a small local event in Washington, D.C., designed to bring the community together for a fun and challenging experience. Over time, it has grown into a renowned annual event, attracting thousands of runners from across the country and around the world. Its rich history, spanning five decades, provides us a dataset with thousands of entries to explore long-term trends in athletic performance.
@@ -223,6 +223,156 @@ graph3 %>% ggplot(aes(x=Year, fill=Age_Group)) +
         plot.caption = element_text(hjust = 0))
 
 pander(favstats(Dat_Comb1$Age))
+```
+
+##Age Insights
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Create age groups (if not already grouped)
+all_data <- all_data %>%
+  mutate(Age_Group = case_when(
+    Age < 20 ~ "<20",
+    Age >= 20 & Age < 30 ~ "20-29",
+    Age >= 30 & Age < 40 ~ "30-39",
+    Age >= 40 & Age < 50 ~ "40-49",
+    Age >= 50 ~ "50+"
+  ))
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(!is.na(Time_in_Minutes) & !is.na(Age_Group) & !is.na(Year))
+
+# Calculate average race time for each age group over years
+average_race_times <- all_data %>%
+  group_by(Year, Age_Group) %>%
+  summarize(Average_Time = mean(Time_in_Minutes, na.rm = TRUE), .groups = "drop")
+
+# Create the line graph
+ggplot(data = average_race_times, aes(x = Year, y = Average_Time, color = Age_Group)) +
+  geom_line(size = 1) +
+  scale_x_continuous(breaks = seq(1973, 2024, 5), limits = c(1973, 2024)) +  # Set x-axis from 1973 to 2024
+  labs(
+    title = "Average Race Times Across Age Groups (1973–2024)",
+    x = "Year",
+    y = "Average Race Time (minutes)",
+    color = "Age Group"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "bottom"
+  )
+
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Create age groups (if not already grouped)
+all_data <- all_data %>%
+  mutate(Age_Group = case_when(
+    Age < 20 ~ "<20",
+    Age >= 20 & Age < 30 ~ "20-29",
+    Age >= 30 & Age < 40 ~ "30-39",
+    Age >= 40 & Age < 50 ~ "40-49",
+    Age >= 50 ~ "50+"
+  ))
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Year) & 
+    !is.na(Division) & 
+    !is.na(Age_Group)
+  )
+
+# Calculate average race time for each age group, year, and division
+average_race_times <- all_data %>%
+  group_by(Year, Division, Age_Group) %>%
+  summarize(Average_Time = mean(Time_in_Minutes, na.rm = TRUE), .groups = "drop")
+
+# Create the faceted line graph
+ggplot(data = average_race_times, aes(x = Year, y = Average_Time, color = Age_Group)) +
+  geom_line(size = 1) +
+  scale_x_continuous(breaks = seq(1973, 2024, 5), limits = c(1973, 2024)) +  # Set x-axis from 1973 to 2024
+  labs(
+    title = "Average Race Times Across Age Groups by Division (1973–2024)",
+    x = "Year",
+    y = "Average Race Time (minutes)",
+    color = "Age Group"
+  ) +
+  facet_wrap(~Division) +  # Facet by Division (gender proxy)
+  theme_bw() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "bottom"
+  )
+
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Combine all datasets into one
+all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
+
+# Convert Time to numeric (in minutes)
+all_data <- all_data %>%
+  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
+
+# Create age groups
+all_data <- all_data %>%
+  mutate(Age_Group = case_when(
+    Age < 20 ~ "<20",
+    Age >= 20 & Age < 30 ~ "20-29",
+    Age >= 30 & Age < 40 ~ "30-39",
+    Age >= 40 & Age < 50 ~ "40-49",
+    Age >= 50 ~ "50+"
+  ))
+
+# Filter out rows with NA in critical columns
+all_data <- all_data %>%
+  filter(
+    !is.na(Time_in_Minutes) & 
+    !is.na(Age_Group) & 
+    !is.na(Year)
+  )
+
+# Create the box plot
+ggplot(all_data, aes(x = Age_Group, y = Time_in_Minutes)) +
+  geom_boxplot(fill = "lightblue", outlier.color = "red", outlier.shape = 1) +
+  labs(
+    title = "Pace Distributions Across Age Groups (1973–2024)",
+    x = "Age Group",
+    y = "Pace (minutes per mile)"
+  ) +
+  theme_bw() +
+  theme(
+    text = element_text(size = 12)
+  )
 ```
 
 
