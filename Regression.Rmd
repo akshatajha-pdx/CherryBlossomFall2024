@@ -35,18 +35,28 @@ Data_22 <- Data_22 %>% select(-1)
 Data_23 <- Data_23 %>% select(-1)
 Data_24 <- Data_24 %>% select(-1)
 
-Dat_Comb <- rbind(Data_73_21, Data_22, Data_23, Data_24)
 
-Dat_Comb <- Dat_Comb %>%
-   mutate(Time = na_if(Time, ""),
-          Time = case_when(str_detect(Time, "^\\d{1,2}:\\d{1,2}$") ~ paste0("00:", Time), # Add "00:" for missing hours
-                           str_detect(Time, "^\\d{1,2}:\\d{1,2}:\\d{1,2}$") ~ Time, 
-                           TRUE ~ NA_character_             # Replace invalid formats with NA
-          ),
-          Time = hms(Time),                  # Convert valid Time to hms format
-          Minutes = period_to_seconds(Time) / 60 # Calculate time in minutes
-   ) %>%
-  filter(!is.na(Time))  
+Dat_Comb1 <- rbind(Data_73_21, Data_22, Data_23, Data_24)
+
+Dat_Comb <- Dat_Comb1 %>%
+  filter(!is.na(Age)) %>% #Removing missing values from age
+# Process Time and add new columns
+  mutate(
+    Time = na_if(Time, "NR"),          
+    Time = na_if(Time, ""),            
+    Time = case_when(
+      str_detect(Time, "^\\d{1,2}:\\d{1,2}$") ~ paste0("00:", Time), # Add "00:" for missing hours
+      str_detect(Time, "^\\d{1,2}:\\d{1,2}:\\d{1,2}$") ~ Time,       
+      TRUE ~ NA_character_             # Replace invalid formats with NA
+    ),
+    Time = hms(Time),                  # Convert valid Time to hms format
+    Minutes = period_to_seconds(Time) / 60 # Calculate time in minutes
+  ) %>%
+  mutate(Pace_Num = (period_to_seconds(ms(Pace)))/60) %>% #converting pace to numeric
+  filter(!is.na(Pace)) %>% 
+  filter(!is.na(Gender)) %>% 
+  filter(!is.na(Time))  %>% # Remove rows with missing Time
+  filter(Year > 1980)
 ```
 
 
@@ -63,17 +73,45 @@ pander(summary(mod3))
 
 mod4 <- lm(Minutes ~ Age*Gender*Year, data=Dat_Comb)
 pander(summary(mod4))
-plot(mod4)
+#plot(mod4)
 
-Dat_Comb %>% 
-  filter(!is.na(Gender)) %>%
-  ggplot(aes(x=Year, y=Minutes, color=Age, group=Age)) +
-  geom_point(alpha=0.1) +
-  geom_smooth(method=lm, linewidth=1.2) +
-  facet_wrap(~Gender)
-  #scale_color_manual(values = c("M" = "turquoise", "W" = "salmon")) +
-  labs(y="Run Time in Minutes", title="Predicting Runtime by Age, Gender, and Year") +
-  theme_bw()
+ks.test(resid(mod1), "pnorm", mean=mean(resid(mod1)), sd=sd(resid(mod1)))
+
+ks.test(resid(mod4), "pnorm", mean=mean(resid(mod4)), sd=sd(resid(mod4)))
 ```
+```{r}
+par(mfrow=c(1,3))
+plot(mod1,which=1:2)
+plot(mod1$residuals, main="Residuals vs Order", xlab="",
+     ylab="Residuals")
+```
+
+
+
+```{r}
+par(mfrow=c(1,3))
+plot(mod2,which=1:2)
+plot(mod2$residuals, main="Residuals vs Order", xlab="",
+     ylab="Residuals")
+```
+
+
+
+```{r}
+par(mfrow=c(1,3))
+plot(mod3,which=1:2)
+plot(mod3$residuals, main="Residuals vs Order", xlab="",
+     ylab="Residuals")
+```
+
+
+
+```{r}
+par(mfrow=c(1,3))
+plot(mod4,which=1:2)
+plot(mod4$residuals, main="Residuals vs Order", xlab="",
+     ylab="Residuals")
+```
+
 
 

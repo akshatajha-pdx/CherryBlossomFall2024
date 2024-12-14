@@ -2,10 +2,10 @@
 title: "Cherry Blossom 10-Mile Race Report"
 author: "Akshata Jha, Breanna Neuwirth, and Andrin Zuellig"
 date: "December 13, 2024"
-output: html_document
+output: word_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(readr)
@@ -137,7 +137,7 @@ graph2 <- Dat_Comb1 %>%
 pander(favstats(n ~ Gender, data=graph2))
 ```
 
-Here we can see the proportion of men and women who have participated in the race over the years. The number of women participating has steadily increased, with recent years have more women than men running. The race organizers have been making efforts to bring popularity to the women's division of the race, which have been working. The average number of women running in the race is 7,731 and the average for men participating is 5,096. 
+This graph shows the proportion of men and women who have participated in the race over the years. The number of women participating has steadily increased, with recent years have more women than men running. The race organizers have been making efforts to bring popularity to the women's division of the race, which have been working. The average number of women running in the race is 7,731 and the average for men participating is 5,096. 
 
 
 ```{r}
@@ -163,7 +163,7 @@ graph3 %>% ggplot(aes(x=Year, fill=Age_Group)) +
 pander(favstats(Dat_Comb1$Age))
 ```
 
-Here we can see the number of participants for different age groups across the years of the race. The majority of runners are in their 20s and 30s. There is no age restriction for the race, so the range is rather large from 2 years old to 91 years old. The average age is about 36 years old. 
+In this graph, we have the number of participants for different age groups across the years of the race. The majority of runners are in their 20s and 30s. There is no age restriction for the race, so the range is rather large from 2 years old to 91 years old. The average age is about 36 years old. 
 
 ##### Data Collection and Challenges
 
@@ -171,14 +171,22 @@ This dataset was collected by scraping results from the Cherry Blossom Race webs
 
 ##### Data Cleaning and Preprocessing
 
-After collecting the data, the following steps were taken to clean and prepare it for analysis:
-
-Handling Missing Values: We had a lot of columns with missing values, we had to decide whether to drop them or fill them with a value.
-Changing variable type: Columns such as Time and Pace were converted into numeric formats so they were easier to work with.
-Removing Outliers: Implausible race times or paces (e.g., unrealistically fast finish times) were identified and excluded.
-Removing Early Years: There were issues with the data in the first few years of the race, along with much smaller amounts of data, so we decided to remove the years 1973-1980.
+After collecting the data, the following steps were taken to clean and prepare it for analysis. We removed the rows with missing values from Age, Time, Pace, and Gender. For Time and Pace, we had to correct the format by adding zeros to the hours place, when needed, which helped when converting them to a numeric format in minutes. Any implausible race times or paces (e.g., unrealistically fast finish times) were identified and excluded.There were issues with the data in the first few years of the race, along with much smaller amounts of data, so we decided to remove the years 1973-1980. The R code for these processes and for the graphs is in the Appendix.
 
 #### Methods
+
+In order to explore the relationship between age and performance, the following methods will be implemented. We will do visualizations for age and performance trends, gender specific insights, yearly trends, and influence of weather. We will also conduct linear regression modeling on performance, which will help quantify the relationship of these variables with performance and assess predictive ability. 
+
+#### Results
+
+
+
+
+#### Conclusions
+
+
+#### References
+
 
 
 #### Appendices
@@ -219,19 +227,9 @@ Dat_Comb.weather <- left_join(temp, select(weather, DATE, PRCP, TMIN), by = c("d
 This blocks ensures all race data is combined into one dataset, making it easier to clean, manipulate and visualize.
 
 ```{r}
-library(ggplot2)
-library(dplyr)
-library(lubridate)
-
-# Combine all datasets into one
-all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
-
-# Convert Time to numeric (in minutes)
-all_data <- all_data %>%
-  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
 
 # Create age groups (if not already grouped)
-all_data <- all_data %>%
+all_data <- Dat_Comb %>%
   mutate(Age_Group = case_when(
     Age < 20 ~ "<20",
     Age >= 20 & Age < 30 ~ "20-29",
@@ -240,21 +238,17 @@ all_data <- all_data %>%
     Age >= 50 ~ "50+"
   ))
 
-# Filter out rows with NA in critical columns
-all_data <- all_data %>%
-  filter(!is.na(Time_in_Minutes) & !is.na(Age_Group) & !is.na(Year))
-
 # Calculate average race time for each age group over years
 average_race_times <- all_data %>%
   group_by(Year, Age_Group) %>%
-  summarize(Average_Time = mean(Time_in_Minutes, na.rm = TRUE), .groups = "drop")
+  summarize(Average_Time = mean(Minutes, na.rm = TRUE), .groups = "drop")
 
 # Create the line graph
 ggplot(data = average_race_times, aes(x = Year, y = Average_Time, color = Age_Group)) +
   geom_line(size = 1) +
-  scale_x_continuous(breaks = seq(1973, 2024, 5), limits = c(1973, 2024)) +  # Set x-axis from 1973 to 2024
+  scale_x_continuous(breaks = seq(1981, 2024, 5), limits = c(1981, 2024)) +  # Set x-axis from 1973 to 2024
   labs(
-    title = "Average Race Times Across Age Groups (1973–2024)",
+    title = "Average Race Times Across Age Groups (1981–2024)",
     x = "Year",
     y = "Average Race Time (minutes)",
     color = "Age Group"
@@ -271,47 +265,19 @@ The grouping above makes it easier to analyze trends across age groups instead o
 
 We convert the race completion times into minutes for mathematical operations. This shows the average race time for each age group, year, and division.
 ```{r}
-library(ggplot2)
-library(dplyr)
-library(lubridate)
-
-# Combine all datasets into one
-all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
-
-# Convert Time to numeric (in minutes)
-all_data <- all_data %>%
-  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
-
-# Create age groups (if not already grouped)
-all_data <- all_data %>%
-  mutate(Age_Group = case_when(
-    Age < 20 ~ "<20",
-    Age >= 20 & Age < 30 ~ "20-29",
-    Age >= 30 & Age < 40 ~ "30-39",
-    Age >= 40 & Age < 50 ~ "40-49",
-    Age >= 50 ~ "50+"
-  ))
-
-# Filter out rows with NA in critical columns
-all_data <- all_data %>%
-  filter(
-    !is.na(Time_in_Minutes) & 
-    !is.na(Year) & 
-    !is.na(Division) & 
-    !is.na(Age_Group)
-  )
 
 # Calculate average race time for each age group, year, and division
 average_race_times <- all_data %>%
+  filter(!is.na(Division)) %>% 
   group_by(Year, Division, Age_Group) %>%
-  summarize(Average_Time = mean(Time_in_Minutes, na.rm = TRUE), .groups = "drop")
+  summarize(Average_Time = mean(Minutes, na.rm = TRUE), .groups = "drop")
 
 # Create the faceted line graph
 ggplot(data = average_race_times, aes(x = Year, y = Average_Time, color = Age_Group)) +
   geom_line(size = 1) +
-  scale_x_continuous(breaks = seq(1973, 2024, 5), limits = c(1973, 2024)) +  # Set x-axis from 1973 to 2024
+  scale_x_continuous(breaks = seq(1981, 2024, 5), limits = c(1981, 2024)) +  # Set x-axis from 1973 to 2024
   labs(
-    title = "Average Race Times Across Age Groups by Division (1973–2024)",
+    title = "Average Race Times Across Age Groups by Division (1981–2024)",
     x = "Year",
     y = "Average Race Time (minutes)",
     color = "Age Group"
@@ -329,40 +295,11 @@ This shows the average finishing time of each age group. As shown previously thi
 
 This code focuses on creating a box plot to visualize the distribution of race paces across different age groups from 1973 to 2024.
 ```{r}
-library(ggplot2)
-library(dplyr)
-library(lubridate)
-
-# Combine all datasets into one
-all_data <- bind_rows(Data_73_21, Data_22, Data_23, Data_24)
-
-# Convert Time to numeric (in minutes)
-all_data <- all_data %>%
-  mutate(Time_in_Minutes = as.numeric(period_to_seconds(hms(Time))) / 60)
-
-# Create age groups
-all_data <- all_data %>%
-  mutate(Age_Group = case_when(
-    Age < 20 ~ "<20",
-    Age >= 20 & Age < 30 ~ "20-29",
-    Age >= 30 & Age < 40 ~ "30-39",
-    Age >= 40 & Age < 50 ~ "40-49",
-    Age >= 50 ~ "50+"
-  ))
-
-# Filter out rows with NA in critical columns
-all_data <- all_data %>%
-  filter(
-    !is.na(Time_in_Minutes) & 
-    !is.na(Age_Group) & 
-    !is.na(Year)
-  )
-
 # Create the box plot
-ggplot(all_data, aes(x = Age_Group, y = Time_in_Minutes)) +
+ggplot(all_data, aes(x = Age_Group, y = Minutes)) +
   geom_boxplot(fill = "lightblue", outlier.color = "red", outlier.shape = 1) +
   labs(
-    title = "Pace Distributions Across Age Groups (1973–2024)",
+    title = "Pace Distributions Across Age Groups (1981–2024)",
     x = "Age Group",
     y = "Pace (minutes per mile)"
   ) +
